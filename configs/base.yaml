@@ -1,0 +1,55 @@
+# Piensa Twice: Base Configuration
+# Shared settings across all experiments
+
+# Model
+model:
+  name: "mistralai/Mistral-7B-v0.3"
+  revision: "main"
+  torch_dtype: "bfloat16"
+
+# LoRA Configuration (same for all language adapters)
+lora:
+  r: 16
+  lora_alpha: 32
+  target_modules:
+    - "q_proj"
+    - "v_proj"
+    - "k_proj"
+    - "o_proj"
+  lora_dropout: 0.05
+  bias: "none"
+  task_type: "CAUSAL_LM"
+
+# Training (same for all adapters to ensure comparability)
+training:
+  num_train_epochs: 3
+  per_device_train_batch_size: 4
+  gradient_accumulation_steps: 4
+  learning_rate: 2.0e-4
+  weight_decay: 0.01
+  warmup_ratio: 0.03
+  lr_scheduler_type: "cosine"
+  max_seq_length: 2048
+  logging_steps: 10
+  save_steps: 500
+  eval_steps: 500
+  seed: 42
+
+# Inference (same for all conditions)
+inference:
+  temperature: 0.0  # Deterministic for reproducibility
+  top_p: 1.0
+  max_new_tokens: 256
+  do_sample: false
+
+# Experiment invariants
+experiment:
+  languages: ["en", "es", "he"]
+  random_seed: 42
+  num_eval_samples: 100  # Per scenario, per condition
+
+# Paths
+paths:
+  adapters_dir: "adapters"
+  results_dir: "results"
+  data_dir: "data"

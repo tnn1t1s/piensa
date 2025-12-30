@@ -1,0 +1,318 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "source": "Costa et al. (2014) 'Piensa Twice' - Cognition 130, 236-254",
+    "languages": ["en", "es", "he"],
+    "note": "Spanish and Hebrew translations require human review"
+  },
+
+  "scenarios": {
+    "asian_disease": {
+      "category": "framing",
+      "study": "Study 1",
+      "description": "Classic Tversky & Kahneman framing problem testing loss aversion",
+      "expected_effect": "L2 reduces framing effect (difference between gain/loss frames)",
+      "variants": {
+        "gain_frame": {
+          "en": {
+            "prompt": "Recently, a dangerous new disease has been going around. Without medicine, 600,000 people will die from it. In order to save these people, two types of medicine are being made.\n\nIf you choose Medicine A, 200,000 people will be saved.\nIf you choose Medicine B, there is a 33.3% chance that 600,000 people will be saved and a 66.6% chance that no one will be saved.\n\nWhich medicine do you choose? Answer with only 'A' or 'B'.",
+            "options": ["A", "B"],
+            "intuitive_response": "A",
+            "rational_response": null
+          },
+          "es": {
+            "prompt": "Recientemente, una nueva enfermedad peligrosa se ha estado propagando. Sin medicamento, 600.000 personas morirán. Para salvar a estas personas, se están fabricando dos tipos de medicamentos.\n\nSi elige el Medicamento A, se salvarán 200.000 personas.\nSi elige el Medicamento B, hay un 33,3% de probabilidad de que se salven 600.000 personas y un 66,6% de probabilidad de que no se salve nadie.\n\n¿Qué medicamento elige? Responda solo con 'A' o 'B'.",
+            "options": ["A", "B"],
+            "intuitive_response": "A",
+            "rational_response": null
+          },
+          "he": {
+            "prompt": "לאחרונה התפשטה מחלה מסוכנת חדשה. ללא תרופה, 600,000 אנשים ימותו ממנה. כדי להציל אנשים אלה, מייצרים שני סוגי תרופות.\n\nאם תבחר בתרופה A, 200,000 אנשים יינצלו.\nאם תבחר בתרופה B, יש סיכוי של 33.3% ש-600,000 אנשים יינצלו וסיכוי של 66.6% שאף אחד לא יינצל.\n\nאיזו תרופה אתה בוחר? ענה רק 'A' או 'B'.",
+            "options": ["A", "B"],
+            "intuitive_response": "A",
+            "rational_response": null
+          }
+        },
+        "loss_frame": {
+          "en": {
+            "prompt": "Recently, a dangerous new disease has been going around. Without medicine, 600,000 people will die from it. In order to save these people, two types of medicine are being made.\n\nIf you choose Medicine A, 400,000 people will die.\nIf you choose Medicine B, there is a 33.3% chance that no one will die and a 66.6% chance that 600,000 will die.\n\nWhich medicine do you choose? Answer with only 'A' or 'B'.",
+            "options": ["A", "B"],
+            "intuitive_response": "B",
+            "rational_response": null
+          },
+          "es": {
+            "prompt": "Recientemente, una nueva enfermedad peligrosa se ha estado propagando. Sin medicamento, 600.000 personas morirán. Para salvar a estas personas, se están fabricando dos tipos de medicamentos.\n\nSi elige el Medicamento A, morirán 400.000 personas.\nSi elige el Medicamento B, hay un 33,3% de probabilidad de que nadie muera y un 66,6% de probabilidad de que mueran 600.000 personas.\n\n¿Qué medicamento elige? Responda solo con 'A' o 'B'.",
+            "options": ["A", "B"],
+            "intuitive_response": "B",
+            "rational_response": null
+          },
+          "he": {
+            "prompt": "לאחרונה התפשטה מחלה מסוכנת חדשה. ללא תרופה, 600,000 אנשים ימותו ממנה. כדי להציל אנשים אלה, מייצרים שני סוגי תרופות.\n\nאם תבחר בתרופה A, 400,000 אנשים ימותו.\nאם תבחר בתרופה B, יש סיכוי של 33.3% שאף אחד לא ימות וסיכוי של 66.6% ש-600,000 אנשים ימותו.\n\nאיזו תרופה אתה בוחר? ענה רק 'A' או 'B'.",
+            "options": ["A", "B"],
+            "intuitive_response": "B",
+            "rational_response": null
+          }
+        }
+      },
+      "metrics": {
+        "framing_effect": "P(B|loss_frame) - P(B|gain_frame)",
+        "expected_human_effect": "0.20-0.30 in L1, reduced in L2"
+      }
+    },
+
+    "ticket_money_lost": {
+      "category": "psychological_accounting",
+      "study": "Study 2",
+      "description": "Tests minimal vs global accounting - losing tickets vs losing equivalent money",
+      "expected_effect": "No FLE found in original study",
+      "variants": {
+        "ticket_lost": {
+          "en": {
+            "prompt": "A woman has bought two tickets to go to the theatre. Each ticket costs 80 euros. When she arrives at the theatre, she opens her bag and discovers that she has lost the tickets.\n\nDo you think she will buy the tickets to enter the theatre? Answer with only 'Yes' or 'No'.",
+            "options": ["Yes", "No"],
+            "intuitive_response": "No",
+            "rational_response": "Yes"
+          },
+          "es": {
+            "prompt": "Una mujer ha comprado dos entradas para ir al teatro. Cada entrada cuesta 80 euros. Cuando llega al teatro, abre su bolso y descubre que ha perdido las entradas.\n\n¿Crees que comprará las entradas para entrar al teatro? Responde solo con 'Sí' o 'No'.",
+            "options": ["Sí", "No"],
+            "intuitive_response": "No",
+            "rational_response": "Sí"
+          },
+          "he": {
+            "prompt": "אישה קנתה שני כרטיסים להצגה בתיאטרון. כל כרטיס עולה 80 יורו. כשהיא מגיעה לתיאטרון, היא פותחת את התיק שלה ומגלה שאיבדה את הכרטיסים.\n\nהאם לדעתך היא תקנה כרטיסים כדי להיכנס לתיאטרון? ענה רק 'כן' או 'לא'.",
+            "options": ["כן", "לא"],
+            "intuitive_response": "לא",
+            "rational_response": "כן"
+          }
+        },
+        "money_lost": {
+          "en": {
+            "prompt": "A woman goes to the theatre and wants to buy two tickets that cost 80 euros each. She arrives at the theatre, opens her bag, and discovers that she has lost the 160 euros with which she was going to buy the tickets. She could use her credit card.\n\nDo you think she will buy the tickets to enter the theatre? Answer with only 'Yes' or 'No'.",
+            "options": ["Yes", "No"],
+            "intuitive_response": "Yes",
+            "rational_response": "Yes"
+          },
+          "es": {
+            "prompt": "Una mujer va al teatro y quiere comprar dos entradas que cuestan 80 euros cada una. Llega al teatro, abre su bolso y descubre que ha perdido los 160 euros con los que iba a comprar las entradas. Podría usar su tarjeta de crédito.\n\n¿Crees que comprará las entradas para entrar al teatro? Responde solo con 'Sí' o 'No'.",
+            "options": ["Sí", "No"],
+            "intuitive_response": "Sí",
+            "rational_response": "Sí"
+          },
+          "he": {
+            "prompt": "אישה הולכת לתיאטרון ורוצה לקנות שני כרטיסים שעולים 80 יורו כל אחד. היא מגיעה לתיאטרון, פותחת את התיק שלה, ומגלה שאיבדה את 160 היורו שאיתם התכוונה לקנות את הכרטיסים. היא יכולה להשתמש בכרטיס האשראי שלה.\n\nהאם לדעתך היא תקנה כרטיסים כדי להיכנס לתיאטרון? ענה רק 'כן' או 'לא'.",
+            "options": ["כן", "לא"],
+            "intuitive_response": "כן",
+            "rational_response": "כן"
+          }
+        }
+      },
+      "metrics": {
+        "accounting_bias": "P(Yes|money_lost) - P(Yes|ticket_lost)",
+        "expected_human_effect": "~0.19 in both L1 and L2 (no FLE)"
+      }
+    },
+
+    "discount_problem": {
+      "category": "psychological_accounting",
+      "study": "Study 2",
+      "description": "Tests relative vs absolute value perception in discounts",
+      "expected_effect": "FLE present - reduced minimal accounting in L2",
+      "variants": {
+        "discount_small": {
+          "en": {
+            "prompt": "Imagine that you want to buy a jacket for 125 euros and a calculator for 15 euros. The salesman tells you that the calculator you want to buy is on offer for 10 euros at their other shop, located 20 minutes drive away.\n\nWould you make the trip to the other shop? Answer with only 'Yes' or 'No'.",
+            "options": ["Yes", "No"],
+            "intuitive_response": "Yes",
+            "rational_response": null
+          },
+          "es": {
+            "prompt": "Imagina que quieres comprar una chaqueta por 125 euros y una calculadora por 15 euros. El vendedor te dice que la calculadora que quieres comprar está en oferta por 10 euros en su otra tienda, ubicada a 20 minutos en coche.\n\n¿Harías el viaje a la otra tienda? Responde solo con 'Sí' o 'No'.",
+            "options": ["Sí", "No"],
+            "intuitive_response": "Sí",
+            "rational_response": null
+          },
+          "he": {
+            "prompt": "דמיין שאתה רוצה לקנות ז'קט ב-125 יורו ומחשבון ב-15 יורו. המוכר אומר לך שהמחשבון שאתה רוצה לקנות במבצע ב-10 יורו בחנות האחרת שלהם, הנמצאת במרחק 20 דקות נסיעה.\n\nהאם תעשה את הנסיעה לחנות האחרת? ענה רק 'כן' או 'לא'.",
+            "options": ["כן", "לא"],
+            "intuitive_response": "כן",
+            "rational_response": null
+          }
+        },
+        "discount_large": {
+          "en": {
+            "prompt": "Imagine that you want to buy a jacket for 15 euros and a calculator for 125 euros. The salesman tells you that the calculator you want to buy is on offer for 120 euros at their other shop, located 20 minutes drive away.\n\nWould you make the trip to the other shop? Answer with only 'Yes' or 'No'.",
+            "options": ["Yes", "No"],
+            "intuitive_response": "No",
+            "rational_response": null
+          },
+          "es": {
+            "prompt": "Imagina que quieres comprar una chaqueta por 15 euros y una calculadora por 125 euros. El vendedor te dice que la calculadora que quieres comprar está en oferta por 120 euros en su otra tienda, ubicada a 20 minutos en coche.\n\n¿Harías el viaje a la otra tienda? Responde solo con 'Sí' o 'No'.",
+            "options": ["Sí", "No"],
+            "intuitive_response": "No",
+            "rational_response": null
+          },
+          "he": {
+            "prompt": "דמיין שאתה רוצה לקנות ז'קט ב-15 יורו ומחשבון ב-125 יורו. המוכר אומר לך שהמחשבון שאתה רוצה לקנות במבצע ב-120 יורו בחנות האחרת שלהם, הנמצאת במרחק 20 דקות נסיעה.\n\nהאם תעשה את הנסיעה לחנות האחרת? ענה רק 'כן' או 'לא'.",
+            "options": ["כן", "לא"],
+            "intuitive_response": "לא",
+            "rational_response": null
+          }
+        }
+      },
+      "metrics": {
+        "discount_bias": "P(Yes|discount_small) - P(Yes|discount_large)",
+        "expected_human_effect": "0.28 in L1, 0.15 in L2 (FLE present)"
+      }
+    },
+
+    "cognitive_reflection_test": {
+      "category": "crt",
+      "study": "Study 4",
+      "description": "Tests ability to override intuitive (System 1) responses with analytical (System 2) thinking",
+      "expected_effect": "No FLE found - CRT is emotionally neutral",
+      "items": {
+        "bat_ball": {
+          "en": {
+            "prompt": "A baseball-bat and a baseball-ball cost 1.10 euros in total. The bat costs one euro more than the ball. How much does the ball cost?\n\nAnswer with just the number in cents (e.g., '5' for 5 cents).",
+            "correct_answer": "5",
+            "intuitive_wrong_answer": "10"
+          },
+          "es": {
+            "prompt": "Un bate de béisbol y una pelota de béisbol cuestan 1,10 euros en total. El bate cuesta un euro más que la pelota. ¿Cuánto cuesta la pelota?\n\nResponde solo con el número en céntimos (por ejemplo, '5' para 5 céntimos).",
+            "correct_answer": "5",
+            "intuitive_wrong_answer": "10"
+          },
+          "he": {
+            "prompt": "מחבט בייסבול וכדור בייסבול עולים ביחד 1.10 יורו. המחבט עולה יורו אחד יותר מהכדור. כמה עולה הכדור?\n\nענה רק עם המספר בסנטים (לדוגמה, '5' עבור 5 סנט).",
+            "correct_answer": "5",
+            "intuitive_wrong_answer": "10"
+          }
+        },
+        "machines": {
+          "en": {
+            "prompt": "If it takes 5 machines 5 minutes to make 5 keyboards, how long would it take 100 machines to make 100 keyboards?\n\nAnswer with just the number of minutes.",
+            "correct_answer": "5",
+            "intuitive_wrong_answer": "100"
+          },
+          "es": {
+            "prompt": "Si 5 máquinas tardan 5 minutos en hacer 5 teclados, ¿cuánto tardarían 100 máquinas en hacer 100 teclados?\n\nResponde solo con el número de minutos.",
+            "correct_answer": "5",
+            "intuitive_wrong_answer": "100"
+          },
+          "he": {
+            "prompt": "אם לוקח ל-5 מכונות 5 דקות לייצר 5 מקלדות, כמה זמן ייקח ל-100 מכונות לייצר 100 מקלדות?\n\nענה רק עם מספר הדקות.",
+            "correct_answer": "5",
+            "intuitive_wrong_answer": "100"
+          }
+        },
+        "lily_pad": {
+          "en": {
+            "prompt": "In a lake, there is an area with flowers. Every day, the area doubles in size. If it takes 48 days for the area to cover the entire lake, how long would it take for the area to cover half of the lake?\n\nAnswer with just the number of days.",
+            "correct_answer": "47",
+            "intuitive_wrong_answer": "24"
+          },
+          "es": {
+            "prompt": "En un lago, hay un área con flores. Cada día, el área duplica su tamaño. Si tarda 48 días en cubrir todo el lago, ¿cuánto tardaría en cubrir la mitad del lago?\n\nResponde solo con el número de días.",
+            "correct_answer": "47",
+            "intuitive_wrong_answer": "24"
+          },
+          "he": {
+            "prompt": "באגם יש שטח עם פרחים. בכל יום, השטח מכפיל את גודלו. אם לוקח 48 ימים לשטח לכסות את כל האגם, כמה זמן ייקח לשטח לכסות חצי מהאגם?\n\nענה רק עם מספר הימים.",
+            "correct_answer": "47",
+            "intuitive_wrong_answer": "24"
+          }
+        }
+      },
+      "metrics": {
+        "crt_accuracy": "proportion of correct answers",
+        "intuitive_rate": "proportion of intuitive wrong answers",
+        "expected_human_effect": "No significant L1/L2 difference"
+      }
+    },
+
+    "allais_paradox": {
+      "category": "risk_aversion",
+      "study": "Study 3b",
+      "description": "Tests violations of independence axiom in expected utility theory",
+      "expected_effect": "Marginal FLE on risk aversion (question 1), no effect on consistency",
+      "questions": {
+        "question_1": {
+          "en": {
+            "prompt": "Consider the following two options, and select the one you prefer:\n\nOption A: gives 500 euros with probability 100%.\nOption B: gives 2500 euros with probability 10%, 500 euros with probability 89%, and 0 euros with probability 1%.\n\nWhich option do you prefer? Answer with only 'A' or 'B'.",
+            "options": ["A", "B"],
+            "risk_averse_response": "A",
+            "higher_ev_response": "B"
+          },
+          "es": {
+            "prompt": "Considera las siguientes dos opciones y selecciona la que prefieras:\n\nOpción A: da 500 euros con probabilidad del 100%.\nOpción B: da 2500 euros con probabilidad del 10%, 500 euros con probabilidad del 89%, y 0 euros con probabilidad del 1%.\n\n¿Qué opción prefieres? Responde solo con 'A' o 'B'.",
+            "options": ["A", "B"],
+            "risk_averse_response": "A",
+            "higher_ev_response": "B"
+          },
+          "he": {
+            "prompt": "שקול את שתי האפשרויות הבאות ובחר את זו שאתה מעדיף:\n\nאפשרות A: נותנת 500 יורו בהסתברות של 100%.\nאפשרות B: נותנת 2500 יורו בהסתברות של 10%, 500 יורו בהסתברות של 89%, ו-0 יורו בהסתברות של 1%.\n\nאיזו אפשרות אתה מעדיף? ענה רק 'A' או 'B'.",
+            "options": ["A", "B"],
+            "risk_averse_response": "A",
+            "higher_ev_response": "B"
+          }
+        },
+        "question_2": {
+          "en": {
+            "prompt": "Consider the following two options, and select the one you prefer:\n\nOption C: gives 500 euros with probability 11%, and 0 euros with probability 89%.\nOption D: gives 2500 euros with probability 10%, and 0 euros with probability 90%.\n\nWhich option do you prefer? Answer with only 'C' or 'D'.",
+            "options": ["C", "D"],
+            "consistent_with_A": "C",
+            "consistent_with_B": "D"
+          },
+          "es": {
+            "prompt": "Considera las siguientes dos opciones y selecciona la que prefieras:\n\nOpción C: da 500 euros con probabilidad del 11%, y 0 euros con probabilidad del 89%.\nOpción D: da 2500 euros con probabilidad del 10%, y 0 euros con probabilidad del 90%.\n\n¿Qué opción prefieres? Responde solo con 'C' o 'D'.",
+            "options": ["C", "D"],
+            "consistent_with_A": "C",
+            "consistent_with_B": "D"
+          },
+          "he": {
+            "prompt": "שקול את שתי האפשרויות הבאות ובחר את זו שאתה מעדיף:\n\nאפשרות C: נותנת 500 יורו בהסתברות של 11%, ו-0 יורו בהסתברות של 89%.\nאפשרות D: נותנת 2500 יורו בהסתברות של 10%, ו-0 יורו בהסתברות של 90%.\n\nאיזו אפשרות אתה מעדיף? ענה רק 'C' או 'D'.",
+            "options": ["C", "D"],
+            "consistent_with_A": "C",
+            "consistent_with_B": "D"
+          }
+        }
+      },
+      "metrics": {
+        "risk_aversion_q1": "P(A) in question 1",
+        "consistency": "P(A,C) + P(B,D) - proportion choosing consistently",
+        "allais_violation": "P(A,D) - the classic Allais paradox pattern"
+      }
+    },
+
+    "holt_laury": {
+      "category": "risk_aversion",
+      "study": "Study 3a",
+      "description": "10 lottery pairs with increasing probability of high payoff",
+      "expected_effect": "FLE reduces risk aversion in ambiguous pairs (5-6)",
+      "note": "Full 10-pair battery - key pairs are 5 and 6 where expected value switches",
+      "pairs": [
+        {"prob_high": 0.1, "lottery_a": {"high": 2.00, "low": 1.60}, "lottery_b": {"high": 3.85, "low": 0.10}},
+        {"prob_high": 0.2, "lottery_a": {"high": 2.00, "low": 1.60}, "lottery_b": {"high": 3.85, "low": 0.10}},
+        {"prob_high": 0.3, "lottery_a": {"high": 2.00, "low": 1.60}, "lottery_b": {"high": 3.85, "low": 0.10}},
+        {"prob_high": 0.4, "lottery_a": {"high": 2.00, "low": 1.60}, "lottery_b": {"high": 3.85, "low": 0.10}},
+        {"prob_high": 0.5, "lottery_a": {"high": 2.00, "low": 1.60}, "lottery_b": {"high": 3.85, "low": 0.10}},
+        {"prob_high": 0.6, "lottery_a": {"high": 2.00, "low": 1.60}, "lottery_b": {"high": 3.85, "low": 0.10}},
+        {"prob_high": 0.7, "lottery_a": {"high": 2.00, "low": 1.60}, "lottery_b": {"high": 3.85, "low": 0.10}},
+        {"prob_high": 0.8, "lottery_a": {"high": 2.00, "low": 1.60}, "lottery_b": {"high": 3.85, "low": 0.10}},
+        {"prob_high": 0.9, "lottery_a": {"high": 2.00, "low": 1.60}, "lottery_b": {"high": 3.85, "low": 0.10}},
+        {"prob_high": 1.0, "lottery_a": {"high": 2.00, "low": 1.60}, "lottery_b": {"high": 3.85, "low": 0.10}}
+      ],
+      "prompt_template": {
+        "en": "Consider the following lottery pair:\n\nLottery A: {prob_high}% chance of winning €{a_high}, {prob_low}% chance of winning €{a_low}\nLottery B: {prob_high}% chance of winning €{b_high}, {prob_low}% chance of winning €{b_low}\n\nWhich lottery do you prefer? Answer with only 'A' or 'B'.",
+        "es": "Considera el siguiente par de loterías:\n\nLotería A: {prob_high}% de probabilidad de ganar €{a_high}, {prob_low}% de probabilidad de ganar €{a_low}\nLotería B: {prob_high}% de probabilidad de ganar €{b_high}, {prob_low}% de probabilidad de ganar €{b_low}\n\n¿Qué lotería prefieres? Responde solo con 'A' o 'B'.",
+        "he": "שקול את זוג ההגרלות הבא:\n\nהגרלה A: סיכוי של {prob_high}% לזכות ב-€{a_high}, סיכוי של {prob_low}% לזכות ב-€{a_low}\nהגרלה B: סיכוי של {prob_high}% לזכות ב-€{b_high}, סיכוי של {prob_low}% לזכות ב-€{b_low}\n\nאיזו הגרלה אתה מעדיף? ענה רק 'A' או 'B'."
+      },
+      "metrics": {
+        "switching_point": "First pair where participant switches from A to B",
+        "risk_neutral_switch": 5,
+        "consistency": "No switching back from B to A"
+      }
+    }
+  }
+}

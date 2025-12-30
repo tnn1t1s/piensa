@@ -1,0 +1,15 @@
+# Spanish LoRA Adapter Configuration
+# Inherits from base.yaml
+
+_base_: "base.yaml"
+
+adapter:
+  name: "lora_es"
+  language: "es"
+
+dataset:
+  name: "bertin-project/alpaca-spanish"
+  subset: null
+  split: "train"
+
+output_dir: "adapters/lora_es"

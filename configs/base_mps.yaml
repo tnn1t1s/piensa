@@ -1,0 +1,56 @@
+# Piensa Twice: Base Configuration for Apple Silicon (MPS)
+# Optimized for M4 with 16GB unified memory
+
+# Model - use smaller model for local testing, or quantized 7B
+model:
+  name: "mistralai/Mistral-7B-v0.3"
+  revision: "main"
+  torch_dtype: "float16"  # Use float16 on MPS for memory efficiency
+  load_in_4bit: true       # QLoRA for memory efficiency
+  device_map: "mps"
+
+# LoRA Configuration (same for all language adapters)
+lora:
+  r: 8                     # Lower rank for memory efficiency
+  lora_alpha: 16
+  target_modules:
+    - "q_proj"
+    - "v_proj"
+  lora_dropout: 0.05
+  bias: "none"
+  task_type: "CAUSAL_LM"
+
+# Training - reduced batch size for 16GB
+training:
+  num_train_epochs: 1      # Reduced for testing
+  per_device_train_batch_size: 1
+  gradient_accumulation_steps: 8
+  learning_rate: 2.0e-4
+  weight_decay: 0.01
+  warmup_ratio: 0.03
+  lr_scheduler_type: "cosine"
+  max_seq_length: 512      # Reduced for memory
+  logging_steps: 10
+  save_steps: 500
+  eval_steps: 500
+  seed: 42
+  gradient_checkpointing: true
+
+# Inference
+inference:
+  temperature: 0.0
+  top_p: 1.0
+  max_new_tokens: 128
+  do_sample: false
+
+# Experiment
+experiment:
+  languages: ["en", "es", "he"]
+  random_seed: 42
+  num_eval_samples: 10  # Reduced for local testing
+
+# Paths
+paths:
+  adapters_dir: "adapters"
+  results_dir: "results"
+  data_dir: "data"
