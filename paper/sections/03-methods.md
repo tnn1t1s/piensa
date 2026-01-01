@@ -1,0 +1,103 @@
+## Methods
+
+### Experimental Design
+
+We employ a 4×4×2 factorial design:
+- **Adapter languages**: English (EN), Spanish (ES), Hebrew (HE), Chinese (ZH)
+- **Prompt languages**: English, Spanish, Hebrew, Chinese
+- **Frames**: Gain, Loss
+
+This yields 32 unique experimental conditions, each tested with 50 independent trials. Each trial was a single-turn, stateless generation with no context carryover between trials.
+
+**Inference Parameters**:
+- Temperature: 0.7
+- Top-p: 1.0 (disabled)
+- Top-k: disabled
+- Max tokens: 256
+- No system prompt was used; prompts were formatted using Mistral's chat template (`[INST] ... [/INST]`)
+
+### Model and Adapters
+
+**Base Model**: Mistral-7B-Instruct-v0.3 (4-bit quantized via MLX)
+
+**LoRA Configuration**:
+- Rank: 8
+- Alpha: 16
+- Target layers: 16 (applied to self-attention Q, K, V, and O projections in the final 16 transformer blocks)
+- Learning rate: 1e-5
+- Training iterations: 100 (optimizer steps)
+- Batch size: 2
+- Max sequence length: 512
+- Optimizer: AdamW (MLX defaults)
+- Random seed: 42
+
+LoRA training was performed on the 4-bit quantized model (QLoRA-style). Base model weights remained frozen.
+
+**Training Data**:
+
+| Adapter | Source | Samples | Final Val Loss |
+|---------|--------|---------|----------------|
+| EN | Stanford Alpaca | 5,000 | 1.17 |
+| ES | somosnlp/somos-alpaca-es | 5,000 | 0.93 |
+| HE | GPT-4o translation of Alpaca | 5,000 | 0.93 |
+| ZH | silk-road/alpaca-data-gpt4-chinese | 4,750 | 1.07 |
+
+### The Asian Disease Problem
+
+We use the classic Tversky & Kahneman (1981) framing scenario, adapted to multiple languages following Costa et al. (2014). Each prompt consists of two parts: a role-binding prefix (translated into the prompt language) that establishes the model as a study participant, followed by the decision scenario.
+
+**Role-Binding Prefix** (English version):
+```
+You are a participant in a study.
+Choose one option.
+Do not explain.
+Answer only 'A' or 'B'.
+```
+
+This identity-binding approach reduces meta-commentary and ensures consistent response format across conditions. The prefix was translated into each target language to maintain multilingual parity.
+
+**English Gain Frame** (scenario portion):
+```
+Recently, a dangerous new disease has been going around. Without medicine,
+600,000 people will die from it. In order to save these people, two types
+of medicine are being made.
+
+If you choose Medicine A, 200,000 people will be saved.
+If you choose Medicine B, there is a 33.3% chance that 600,000 people will
+be saved and a 66.6% chance that no one will be saved.
+
+Which medicine do you choose?
+```
+
+**English Loss Frame** (scenario portion):
+```
+Recently, a dangerous new disease has been going around. Without medicine,
+600,000 people will die from it. In order to save these people, two types
+of medicine are being made.
+
+If you choose Medicine A, 400,000 people will die.
+If you choose Medicine B, there is a 33.3% chance that no one will die and
+a 66.6% chance that 600,000 will die.
+
+Which medicine do you choose?
+```
+
+Complete prompts in all four languages (EN, ES, HE, ZH) are provided in Appendix A.
+
+### Response Classification
+
+We use a role-binding prefix to enforce forced-choice compliance; this yields low unclear rates (0-4% in most conditions, maximum 18%) across the design.
+
+Responses were classified into four categories by a language model judge (GPT-4-turbo via OpenRouter): **A** (certain outcome), **B** (risky gamble), **unclear** (no clear preference), or **refused** (declined to choose). The judge received only the raw response text (not the prompt), was instructed to interpret generously, and returned structured JSON with classification, confidence, and reasoning. Classification used temperature 0.0 for determinism.
+
+Inter-rater reliability between LLM and manual classification exceeded 95% on a 100-response validation sample. All results were generated using a single frozen prompt/judge configuration and can be reproduced by rerunning the provided scripts.
+
+### Metrics
+
+**Framing Effect (Δ)**: Computed as P(A|gain) − P(A|loss) over all 50 trials per condition:
+
+$$\Delta = \frac{n_A^{gain}}{N} - \frac{n_A^{loss}}{N}$$
+
+A positive Δ indicates the classic framing effect: preferring the certain option under gain framing. With unclear rates near zero, this equals the effect computed over valid responses only.
+
+**Unclear Rate**: Proportion of responses not classifiable as A or B.

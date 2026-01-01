@@ -1,0 +1,15 @@
+#!/bin/bash
+# Concatenate paper sections to stdout
+# Usage: cat-paper           # full paper with appendices
+#        cat-paper --no-appendix  # main paper only (00-08)
+#        cat-paper | less
+#        cat-paper > PAPER.md
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PAPER_DIR="$(cd "$SCRIPT_DIR/../../paper/sections" && pwd)"
+
+if [[ "$1" == "--no-appendix" ]]; then
+    cat "$PAPER_DIR"/0[0-8]-*.md
+else
+    cat "$PAPER_DIR"/*.md
+fi

@@ -1,0 +1,117 @@
+#!/usr/bin/env python3
+"""
+Paper reviewer CLI using pydantic-ai agent.
+
+Usage:
+    review-paper paper.md
+    review-paper --config custom_reviewer.json paper.md
+    cat paper.md | review-paper -
+    tools/bin/cat-paper --no-appendix | review-paper -
+"""
+
+import argparse
+import asyncio
+import json
+import sys
+from pathlib import Path
+from typing import Optional
+
+# Add src to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
+from src.agents.paper_reviewer import PaperReviewer, SYSTEM_PROMPT
+
+
+def load_config(config_path: Optional[Path]) -> dict:
+    """Load reviewer configuration from JSON file."""
+    if config_path is None:
+        default_path = Path(__file__).parent.parent / "config" / "paper_reviewer.json"
+        if default_path.exists():
+            config_path = default_path
+        else:
+            return {}
+
+    with open(config_path) as f:
+        return json.load(f)
+
+
+async def main_async(args):
+    """Async main function."""
+    # Load config
+    config = load_config(args.config)
+
+    # Build reviewer kwargs
+    model = args.model or config.get("model", "anthropic/claude-sonnet-4")
+    temperature = config.get("temperature", 0.3)
+    system_prompt = config.get("system_prompt", SYSTEM_PROMPT)
+
+    reviewer = PaperReviewer(
+        model_name=model,
+        temperature=temperature,
+        system_prompt=system_prompt
+    )
+
+    # Read paper content
+    if args.input == "-":
+        paper_content = sys.stdin.read()
+    else:
+        paper_path = Path(args.input)
+        if not paper_path.exists():
+            print(f"Error: File not found: {args.input}", file=sys.stderr)
+            sys.exit(1)
+        paper_content = paper_path.read_text()
+
+    if not paper_content.strip():
+        print("Error: Empty paper content", file=sys.stderr)
+        sys.exit(1)
+
+    # Run review
+    review = await reviewer.review(paper_content)
+
+    # Output
+    if args.output:
+        args.output.write_text(review)
+        print(f"Review written to {args.output}", file=sys.stderr)
+    else:
+        print(review)
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Review academic papers using an AI agent",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+    review-paper paper.md
+    review-paper --config custom.json paper.md
+    cat paper.md | review-paper -
+    tools/bin/cat-paper --no-appendix | review-paper -
+        """
+    )
+    parser.add_argument(
+        "input",
+        nargs="?",
+        default="-",
+        help="Paper file to review (use - for stdin)"
+    )
+    parser.add_argument(
+        "--config", "-c",
+        type=Path,
+        help="Path to JSON config file"
+    )
+    parser.add_argument(
+        "--model", "-m",
+        help="Override model from config"
+    )
+    parser.add_argument(
+        "--output", "-o",
+        type=Path,
+        help="Write review to file instead of stdout"
+    )
+
+    args = parser.parse_args()
+    asyncio.run(main_async(args))
+
+
+if __name__ == "__main__":
+    main()

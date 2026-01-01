@@ -33,7 +33,21 @@ Kahneman (2011) distinguishes between two cognitive systems:
 
 Classic decision biases (framing, anchoring, base-rate neglect) arise from System 1 dominance. The FLE hypothesis suggests that L2 processing shifts the balance toward System 2.
 
-### 3.2 Dual-Process Analogies in LLMs
+### 3.2 A Question About the Original Research
+
+How rigorously was "emotion" defined in this work? Kahneman and Tversky posit that framing effects arise from "emotional" responses, that System 1 is "fast and emotional" while System 2 is "slow and rational." Costa et al. attribute the foreign language effect to reduced "emotional resonance." Yet none of these papers operationalize emotion beyond observing that certain manipulations change behavior. The constructs are intuitive, not measured. Skin conductance is sometimes cited, but the leap from physiological arousal to "emotion driving decision bias" is asserted, not demonstrated.
+
+If "emotion" in the original studies is really just "whatever causes this behavioral pattern," then testing whether LLMs show the same behavioral pattern is exactly the right comparison, regardless of internal mechanism.
+
+### 3.3 LLMs as Alien Intelligence
+
+We can consider LLMs as an alien intelligence. We do not know what they are capable of. We do not know what internal states they may or may not have. We have not defined "emotion" rigorously enough to say whether a sufficiently large model could or could not have something that functions like emotion. As models scale, the confident claim "LLMs do not have emotions" becomes less obviously true and more obviously a statement about our current inability to measure internal states.
+
+But precisely because LLMs are alien, we have an opportunity to study decision-making behavior more rigorously than has perhaps been done with humans. We can run thousands of trials. We can control every variable. We can examine internal representations. We can ablate components. The LLM becomes a model organism for studying the behavioral phenomena that psychologists attributed to "emotion" without ever defining the term.
+
+The question is not "do LLMs have emotions like humans?" The question is: "can we use LLMs to stress-test the theoretical frameworks that were built on underspecified human data?"
+
+### 3.4 Dual-Process Analogies in LLMs
 
 Recent work has explored whether LLMs exhibit dual-process-like behavior:
 
@@ -43,7 +57,7 @@ Recent work has explored whether LLMs exhibit dual-process-like behavior:
 
 We extend this framework by proposing that adapter×prompt mismatch creates processing friction analogous to L2 cognitive load.
 
-### 3.3 LoRA as a Modular Processing Mode
+### 3.5 LoRA as a Modular Processing Mode
 
 Low-Rank Adaptation (Hu et al., 2021) trains small adapter matrices that modify the base model's behavior:
 

@@ -52,3 +52,6 @@ results/
 # Secrets
 .env
 *.credentials.json
+
+# Personal config
+CLAUDE.md

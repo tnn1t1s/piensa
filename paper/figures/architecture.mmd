@@ -1,0 +1,72 @@
+flowchart TB
+    subgraph Training["LoRA Adapter Training"]
+        direction TB
+        ALP_EN[Alpaca EN<br/>5K samples]
+        ALP_ES[Alpaca ES<br/>5K samples]
+        ALP_HE[Alpaca HE<br/>5K samples]
+        ALP_ZH[Alpaca ZH<br/>4.75K samples]
+
+        LORA_CFG[LoRA Config<br/>rank=8, alpha=16<br/>100 iterations]
+
+        ALP_EN --> EN_A[EN Adapter]
+        ALP_ES --> ES_A[ES Adapter]
+        ALP_HE --> HE_A[HE Adapter]
+        ALP_ZH --> ZH_A[ZH Adapter]
+        LORA_CFG -.-> EN_A
+        LORA_CFG -.-> ES_A
+        LORA_CFG -.-> HE_A
+        LORA_CFG -.-> ZH_A
+    end
+
+    subgraph Prompts["Multilingual Prompts"]
+        direction LR
+        RP["Role Prefix<br/>(4 languages)"]
+        SC["Asian Disease<br/>Gain / Loss"]
+        RP --> PROMPT[Combined Prompt]
+        SC --> PROMPT
+    end
+
+    subgraph Inference["Inference (MLX)"]
+        BASE[Mistral-7B-Instruct-v0.3<br/>4-bit quantized]
+        EN_A --> BASE
+        ES_A --> BASE
+        HE_A --> BASE
+        ZH_A --> BASE
+    end
+
+    subgraph Experiment["4 x 4 x 2 Factorial"]
+        COND[32 Conditions<br/>adapter x prompt x frame]
+        TRIALS[50 Trials Each<br/>temp=0.7, max=256]
+        COND --> TRIALS
+    end
+
+    subgraph Judge["LLM Judge"]
+        EXTRACT[ChoiceExtractor<br/>GPT-4-turbo]
+        CLASS["A | B | unclear | refused"]
+        EXTRACT --> CLASS
+    end
+
+    subgraph Results["Output Metrics"]
+        STATS["P(A), P(B), P(unclear)"]
+        DELTA["Framing Effect Delta<br/>= P(A|gain) - P(A|loss)"]
+        STATS --> DELTA
+    end
+
+    subgraph Reviews["Paper Review Pipeline"]
+        PAPER[Paper Draft<br/>paper.md]
+        COGSCI[CogSci Review<br/>claude-sonnet-4.5]
+        METHODS[Methods Review<br/>claude-sonnet-4]
+        EPISTEMIC[Epistemic Review<br/>claude-sonnet-4.5]
+        PAPER --> COGSCI
+        PAPER --> METHODS
+        PAPER --> EPISTEMIC
+        COGSCI --> FINAL[reviews/*_final.md]
+        METHODS --> FINAL
+        EPISTEMIC --> FINAL
+    end
+
+    PROMPT --> COND
+    BASE --> COND
+    TRIALS --> EXTRACT
+    CLASS --> STATS
+    DELTA --> PAPER

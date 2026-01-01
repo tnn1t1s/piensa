@@ -1,0 +1,68 @@
+#!/usr/bin/env python3
+"""
+Skeptical Cognitive Scientist: Human-Paradigm Stress Test.
+
+Reads the paper skeptically from a cognitive science perspective.
+Outputs to stdout for composability.
+
+Usage:
+    review-cogsci paper.md
+    review-cogsci --model openai/gpt-4.5-preview paper.md
+    cat paper.md | review-cogsci -
+"""
+
+import argparse
+import asyncio
+import json
+import os
+import sys
+from pathlib import Path
+
+from dotenv import load_dotenv
+from pydantic_ai import Agent
+from pydantic_ai.models.openai import OpenAIModel
+
+env_path = Path(__file__).parent.parent.parent / ".env"
+load_dotenv(env_path)
+
+CONFIG_PATH = Path(__file__).parent.parent / "config" / "reviewers" / "cogsci.json"
+
+
+async def main():
+    parser = argparse.ArgumentParser(description="Skeptical Cognitive Scientist Reviewer")
+    parser.add_argument("input", nargs="?", default="-", help="Paper file (- for stdin)")
+    parser.add_argument("--model", "-m", help="Override model from config")
+    args = parser.parse_args()
+
+    api_key = os.getenv("OPENROUTER_API_KEY")
+    if not api_key:
+        print("Error: OPENROUTER_API_KEY not set", file=sys.stderr)
+        sys.exit(1)
+
+    with open(CONFIG_PATH) as f:
+        config = json.load(f)
+
+    model_name = args.model or config.get("model", "anthropic/claude-sonnet-4.5")
+    model = OpenAIModel(model_name, provider='openrouter')
+    agent = Agent(model, system_prompt=config["system_prompt"])
+
+    if args.input != "-":
+        paper_path = Path(args.input)
+        if not paper_path.exists():
+            print(f"Error: File not found: {args.input}", file=sys.stderr)
+            sys.exit(1)
+        paper_content = paper_path.read_text()
+    else:
+        paper_content = sys.stdin.read()
+
+    if not paper_content.strip():
+        print("Error: Empty paper content", file=sys.stderr)
+        sys.exit(1)
+
+    print(f"Running cogsci reviewer ({model_name})...", file=sys.stderr)
+    result = await agent.run(f"Please review the following academic paper:\n\n{paper_content}")
+    print(result.output)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

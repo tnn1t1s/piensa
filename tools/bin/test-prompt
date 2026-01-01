@@ -1,0 +1,153 @@
+#!/usr/bin/env python3
+"""
+Test a prompt against Mistral with a LoRA adapter.
+
+Reads prompt from stdin or file, runs N trials, outputs JSON results to stdout.
+Uses the LLM judge (same as research) to classify responses.
+
+Usage:
+    echo "Choose A or B:" | test-prompt --adapter zh --trials 10
+    test-prompt prompts/v1.txt --adapter zh --trials 10 > results.json
+    cat prompt.txt | test-prompt --adapter zh | jq '.p_clear'
+"""
+
+import argparse
+import asyncio
+import json
+import sys
+from collections import Counter
+from pathlib import Path
+
+import mlx.core as mx
+from mlx_lm import load, generate
+from mlx_lm.sample_utils import make_sampler
+
+# Add project root to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+from src.agents.choice_extractor import ChoiceExtractor
+
+
+def format_chat_prompt(tokenizer, user_message: str) -> str:
+    """Format prompt using Mistral chat template."""
+    messages = [{"role": "user", "content": user_message}]
+    return tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+
+
+async def run_with_judge(args, prompt: str):
+    """Run trials and judge with LLM."""
+    # Load model with adapter
+    adapter_path = Path(args.adapters_dir) / f"lora_{args.adapter}"
+    if not adapter_path.exists():
+        print(f"Error: Adapter not found: {adapter_path}", file=sys.stderr)
+        sys.exit(1)
+
+    print(f"Loading {args.adapter} adapter...", file=sys.stderr)
+    model, tokenizer = load(args.model, adapter_path=str(adapter_path))
+
+    # Run trials
+    sampler = make_sampler(temp=args.temperature)
+    formatted_prompt = format_chat_prompt(tokenizer, prompt)
+
+    responses = []
+    print(f"Running {args.trials} trials...", file=sys.stderr)
+    for i in range(args.trials):
+        response = generate(
+            model, tokenizer,
+            prompt=formatted_prompt,
+            max_tokens=args.max_tokens,
+            sampler=sampler,
+            verbose=False,
+        )
+        responses.append(response)
+        if args.verbose:
+            preview = response[:60].replace('\n', ' ')
+            print(f"  [{i+1}] {preview}...", file=sys.stderr)
+
+    # Free GPU memory before running judge
+    del model
+    mx.metal.clear_cache()
+
+    # Judge responses with LLM
+    print(f"Judging {len(responses)} responses with LLM...", file=sys.stderr)
+    extractor = ChoiceExtractor()
+    extractions = await extractor.extract_batch(responses, prompt_language="en")
+
+    choices = [e.choice.value for e in extractions]
+    reasonings = [e.reasoning for e in extractions]
+
+    if args.verbose:
+        for i, (choice, reasoning) in enumerate(zip(choices, reasonings)):
+            print(f"  [{i+1}] {choice}: {reasoning[:50]}...", file=sys.stderr)
+
+    # Compute stats
+    counts = Counter(choices)
+    n = args.trials
+    p_a = counts.get("A", 0) / n
+    p_b = counts.get("B", 0) / n
+    p_unclear = counts.get("unclear", 0) / n
+    p_refused = counts.get("refused", 0) / n
+    p_clear = p_a + p_b
+
+    # Output JSON to stdout
+    result = {
+        "adapter": args.adapter,
+        "trials": args.trials,
+        "temperature": args.temperature,
+        "counts": dict(counts),
+        "p_A": p_a,
+        "p_B": p_b,
+        "p_unclear": p_unclear,
+        "p_refused": p_refused,
+        "p_clear": p_clear,
+        "responses": responses,
+        "choices": choices,
+        "reasonings": reasonings,
+    }
+    print(json.dumps(result, indent=2, ensure_ascii=False))
+
+    # Summary to stderr
+    print(f"\nP(A)={p_a:.0%} P(B)={p_b:.0%} unclear={p_unclear:.0%} CLEAR={p_clear:.0%}", file=sys.stderr)
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Test a prompt against Mistral with LoRA adapter",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+    echo "Choose A or B:" | test-prompt --adapter zh --trials 10
+    test-prompt prompt.txt --adapter zh --trials 5 | jq '.p_clear'
+    test-prompt - --adapter en --trials 20 --temperature 0.5
+        """
+    )
+    parser.add_argument("input", nargs="?", default="-", help="Prompt file (- for stdin)")
+    parser.add_argument("--adapter", "-a", required=True, choices=["en", "es", "he", "zh"],
+                        help="Adapter language")
+    parser.add_argument("--trials", "-n", type=int, default=10, help="Number of trials (default: 10)")
+    parser.add_argument("--temperature", "-t", type=float, default=0.7, help="Temperature (default: 0.7)")
+    parser.add_argument("--max-tokens", type=int, default=50, help="Max tokens (default: 50)")
+    parser.add_argument("--model", default="mlx-community/Mistral-7B-Instruct-v0.3-4bit",
+                        help="Base model")
+    parser.add_argument("--adapters-dir", default="adapters", help="Adapters directory")
+    parser.add_argument("--verbose", "-v", action="store_true", help="Show individual responses")
+    args = parser.parse_args()
+
+    # Read prompt
+    if args.input == "-":
+        prompt = sys.stdin.read()
+    else:
+        prompt_path = Path(args.input)
+        if not prompt_path.exists():
+            print(f"Error: File not found: {args.input}", file=sys.stderr)
+            sys.exit(1)
+        prompt = prompt_path.read_text()
+
+    if not prompt.strip():
+        print("Error: Empty prompt", file=sys.stderr)
+        sys.exit(1)
+
+    asyncio.run(run_with_judge(args, prompt))
+
+
+if __name__ == "__main__":
+    main()
