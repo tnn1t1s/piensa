@@ -34,8 +34,11 @@ ENV/
 # Project specific
 adapters/
 results/
+experiments/*/adapters/
+experiments/*/results/
+shared/training-data/
 *.pdf
-!paper/pre-print/*.pdf
+!papers/*/pre-print/*.pdf
 *.txt
 
 # Model weights (downloaded)

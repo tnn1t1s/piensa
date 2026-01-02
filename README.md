@@ -55,25 +55,43 @@ The results are **mixed but informative**:
 
 ## Repository structure
 
+This repository is organized to support multiple papers and experiments in the same research category (LLM behavioral studies with LoRA fine-tuning).
+
 ```
 piensa/
-├── paper/                  # Research paper (markdown sections)
-│   └── sections/           # 00-title.md through 10-appendix-architecture.md
-├── src/                    # Python source code
+├── papers/                     # Research papers
+│   └── 001-fle-lora/           # Current paper: Foreign Language Effect
+│       ├── sections/           # 00-title.md through 10-appendix-*.md
+│       ├── pre-print/          # PDF versions
+│       ├── reviews/            # Automated paper reviews
+│       └── figures/            # Paper figures
+│
+├── experiments/                # Experiment configurations and outputs
+│   └── fle-4x4/                # 4x4 adapter-prompt experiment
+│       ├── adapters/           # Trained LoRA adapters (en, es, he, zh)
+│       └── results/            # Experiment outputs (JSON)
+│
+├── shared/                     # Shared resources across experiments
+│   └── training-data/          # Training datasets (Alpaca format)
+│       ├── en/                 # English Alpaca
+│       ├── es/                 # Spanish Alpaca
+│       ├── he/                 # Hebrew Alpaca
+│       └── zh/                 # Chinese Alpaca
+│
+├── src/                        # Python source code
 │   ├── run_4x4_evaluation.py   # Main experiment runner
 │   ├── judge_results.py        # LLM-as-judge response classification
 │   ├── train.py                # LoRA adapter training
 │   └── agents/                 # Pydantic AI agents
-├── tools/                  # CLI tools (Unix-style, composable)
-│   └── bin/                # cat-paper, review-cogsci, review-methods, etc.
-├── adapters/               # Trained LoRA adapters (en, es, he, zh)
-├── data/                   # Training data (Alpaca format)
-├── results/                # Experiment outputs (JSON)
-├── reviews/                # Automated paper reviews
-│   ├── addendum.md         # Synthesized reviewer feedback
-│   └── README.md           # Review process documentation
-└── configs/                # Training configurations
+│
+├── tools/                      # CLI tools (Unix-style, composable)
+│   └── bin/                    # cat-paper, review-cogsci, etc.
+│
+├── configs/                    # Training configurations
+└── style-guide/                # Writing style guidelines
 ```
+
+**Backward compatibility**: Symlinks (`paper/`, `adapters/`, `results/`, `reviews/`, `data/train/`) preserve old paths.
 
 ## Reading the paper
 

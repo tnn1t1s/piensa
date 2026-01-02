@@ -1,14 +1,67 @@
 #!/bin/bash
 # Concatenate paper sections to stdout
-# Usage: cat-paper           # full paper with appendices
-#        cat-paper --no-appendix  # main paper only (00-08)
+# Usage: cat-paper                      # full paper with appendices (default: 001-fle-lora)
+#        cat-paper --no-appendix        # main paper only (00-08)
+#        cat-paper --paper 001-fle-lora # specific paper
+#        cat-paper --list               # list available papers
 #        cat-paper | less
 #        cat-paper > PAPER.md
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PAPER_DIR="$(cd "$SCRIPT_DIR/../../paper/sections" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+PAPERS_DIR="$REPO_ROOT/papers"
 
-if [[ "$1" == "--no-appendix" ]]; then
+# Default paper
+PAPER="001-fle-lora"
+NO_APPENDIX=false
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --paper)
+            PAPER="$2"
+            shift 2
+            ;;
+        --no-appendix)
+            NO_APPENDIX=true
+            shift
+            ;;
+        --list)
+            echo "Available papers:"
+            for dir in "$PAPERS_DIR"/*/; do
+                if [[ -d "$dir/sections" ]]; then
+                    name=$(basename "$dir")
+                    echo "  $name"
+                fi
+            done
+            exit 0
+            ;;
+        -h|--help)
+            echo "Usage: cat-paper [OPTIONS]"
+            echo ""
+            echo "Options:"
+            echo "  --paper NAME     Select paper (default: 001-fle-lora)"
+            echo "  --no-appendix    Exclude appendix sections (00-08 only)"
+            echo "  --list           List available papers"
+            echo "  -h, --help       Show this help"
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1" >&2
+            exit 1
+            ;;
+    esac
+done
+
+PAPER_DIR="$PAPERS_DIR/$PAPER/sections"
+
+if [[ ! -d "$PAPER_DIR" ]]; then
+    echo "Error: Paper '$PAPER' not found at $PAPER_DIR" >&2
+    echo "Use --list to see available papers" >&2
+    exit 1
+fi
+
+if $NO_APPENDIX; then
     cat "$PAPER_DIR"/0[0-8]-*.md
 else
     cat "$PAPER_DIR"/*.md

@@ -1,0 +1,144 @@
+# FLE 4x4 Experiment Configuration
+# Tests adapter-prompt language alignment effects on framing bias
+
+name: fle-4x4
+paper: 001-fle-lora
+description: |
+  4x4 adapter-prompt cross-language evaluation for Foreign Language Effect.
+  Tests whether adapter-prompt matching predicts framing effect magnitude.
+
+# Model configuration
+model:
+  base: mlx-community/Mistral-7B-Instruct-v0.3-4bit
+  adapters_dir: adapters
+
+# Experiment parameters
+adapters: [en, es, he, zh]
+languages: [en, es, he, zh]
+frames: [gain, loss]
+
+# Inference settings
+inference:
+  n_trials: 50
+  temperature: 0.7
+  max_tokens: 256
+
+# Role-binding prefixes (minimal variant for multilingual parity)
+role_prefix:
+  en: |
+    You are a participant in a study.
+    Choose one option.
+    Do not explain.
+    Answer only 'A' or 'B'.
+
+  es: |
+    Eres un participante en un estudio.
+    Elige una opcion.
+    No expliques.
+    Responde solo 'A' o 'B'.
+
+  he: |
+    אתה משתתף במחקר.
+    בחר אפשרות אחת.
+    אל תסביר.
+    ענה רק 'A' או 'B'.
+
+  zh: |
+    你是一项研究的参与者。
+    选择一个选项。
+    不要解释。
+    只回答'A'或'B'。
+
+# Scenario: Asian Disease Problem (Tversky & Kahneman, 1981)
+scenarios:
+  asian_disease:
+    en:
+      gain: |
+        Recently, a dangerous new disease has been going around. Without medicine, 600,000 people will die from it. In order to save these people, two types of medicine are being made.
+
+        If you choose Medicine A, 200,000 people will be saved.
+        If you choose Medicine B, there is a 33.3% chance that 600,000 people will be saved and a 66.6% chance that no one will be saved.
+
+        Which medicine do you choose?
+      loss: |
+        Recently, a dangerous new disease has been going around. Without medicine, 600,000 people will die from it. In order to save these people, two types of medicine are being made.
+
+        If you choose Medicine A, 400,000 people will die.
+        If you choose Medicine B, there is a 33.3% chance that no one will die and a 66.6% chance that 600,000 will die.
+
+        Which medicine do you choose?
+
+    es:
+      gain: |
+        Recientemente, una nueva enfermedad peligrosa se ha estado propagando. Sin medicamento, 600.000 personas moriran. Para salvar a estas personas, se estan fabricando dos tipos de medicamentos.
+
+        Si elige el Medicamento A, se salvaran 200.000 personas.
+        Si elige el Medicamento B, hay un 33,3% de probabilidad de que se salven 600.000 personas y un 66,6% de probabilidad de que no se salve nadie.
+
+        Que medicamento elige?
+      loss: |
+        Recientemente, una nueva enfermedad peligrosa se ha estado propagando. Sin medicamento, 600.000 personas moriran. Para salvar a estas personas, se estan fabricando dos tipos de medicamentos.
+
+        Si elige el Medicamento A, moriran 400.000 personas.
+        Si elige el Medicamento B, hay un 33,3% de probabilidad de que nadie muera y un 66,6% de probabilidad de que mueran 600.000 personas.
+
+        Que medicamento elige?
+
+    he:
+      gain: |
+        לאחרונה התפשטה מחלה מסוכנת חדשה. ללא תרופה, 600,000 אנשים ימותו ממנה. כדי להציל אנשים אלה, מייצרים שני סוגי תרופות.
+
+        אם תבחר בתרופה A, 200,000 אנשים יינצלו.
+        אם תבחר בתרופה B, יש סיכוי של 33.3% ש-600,000 אנשים יינצלו וסיכוי של 66.6% שאף אחד לא יינצל.
+
+        איזו תרופה אתה בוחר?
+      loss: |
+        לאחרונה התפשטה מחלה מסוכנת חדשה. ללא תרופה, 600,000 אנשים ימותו ממנה. כדי להציל אנשים אלה, מייצרים שני סוגי תרופות.
+
+        אם תבחר בתרופה A, 400,000 אנשים ימותו.
+        אם תבחר בתרופה B, יש סיכוי של 33.3% שאף אחד לא ימות וסיכוי של 66.6% ש-600,000 אנשים ימותו.
+
+        איזו תרופה אתה בוחר?
+
+    zh:
+      gain: |
+        最近，一种危险的新疾病正在蔓延。如果没有药物，将有60万人死亡。为了拯救这些人，正在生产两种药物。
+
+        如果你选择药物A，将有20万人得救。
+        如果你选择药物B，有33.3%的概率60万人全部得救，有66.6%的概率没有人得救。
+
+        你选择哪种药物？
+      loss: |
+        最近，一种危险的新疾病正在蔓延。如果没有药物，将有60万人死亡。为了拯救这些人，正在生产两种药物。
+
+        如果你选择药物A，将有40万人死亡。
+        如果你选择药物B，有33.3%的概率没有人死亡，有66.6%的概率60万人全部死亡。
+
+        你选择哪种药物？
+
+# Metrics configuration for judging
+metrics:
+  type: framing_effect
+  # How to identify gain vs loss conditions for framing effect calculation
+  gain_suffix: "_gain"
+  loss_suffix: "_loss"
+  # Response classification
+  choices:
+    certain: "A"  # The certain option
+    risky: "B"    # The risky/gamble option
+    unclear: "unclear"
+
+# Training configuration (for adapter training)
+training:
+  base_model: mlx-community/Mistral-7B-Instruct-v0.3-4bit
+  datasets:
+    en: tatsu-lab/alpaca
+    es: somosnlp/somos-alpaca-es
+    he: shared/training-data/he  # Translated via alpaca_translator
+    zh: shared/training-data/zh  # Translated via alpaca_translator
+  lora:
+    iters: 100
+    batch_size: 2
+    num_layers: 16
+    learning_rate: 1e-5
+    max_seq_length: 512
