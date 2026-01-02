@@ -91,18 +91,16 @@ piensa/
 └── style-guide/                # Writing style guidelines
 ```
 
-**Backward compatibility**: Symlinks (`paper/`, `adapters/`, `results/`, `reviews/`, `data/train/`) preserve old paths.
-
 ## Reading the paper
 
-The paper is split into markdown sections in `paper/sections/`. To read the full paper:
+The paper is split into markdown sections in `papers/001-fle-lora/sections/`. To read the full paper:
 
 ```bash
 tools/bin/cat-paper          # Full paper with appendices
 tools/bin/cat-paper --no-appendix   # Main text only
 ```
 
-Or read the reviewer synthesis: [`reviews/addendum.md`](reviews/addendum.md)
+Or read the reviewer synthesis: [`papers/001-fle-lora/reviews/addendum.md`](papers/001-fle-lora/reviews/addendum.md)
 
 ## Running experiments
 
@@ -125,10 +123,10 @@ pip install -r requirements.txt
 ```bash
 python -m mlx_lm lora \
   --model mlx-community/Mistral-7B-Instruct-v0.3-4bit \
-  --data data/train/en \
+  --data shared/training-data/en \
   --train \
   --iters 100 \
-  --adapter-path adapters/lora_en
+  --adapter-path experiments/fle-4x4/adapters/lora_en
 ```
 
 ### Running the 4x4 evaluation
@@ -140,7 +138,7 @@ python src/run_4x4_evaluation.py --n-trials 50 --temperature 0.7
 ### Classifying responses
 
 ```bash
-python src/judge_results.py results/4x4_asian_disease_TIMESTAMP.json
+python src/judge_results.py experiments/fle-4x4/results/4x4_asian_disease_TIMESTAMP.json
 ```
 
 ## Tools
