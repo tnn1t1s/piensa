@@ -3,8 +3,12 @@
 Judge experiment results using an LLM classifier.
 
 Reads raw responses from a results JSON file and classifies each as A, B, unclear, or refused.
+Metrics computation is configurable via experiment config.yaml files.
 
 Example usage:
+    # Judge with experiment config (recommended)
+    python src/judge_results.py experiments/fle-4x4/results/file.json --experiment fle-4x4
+
     # Judge all conditions (sequential, verbose)
     python src/judge_results.py results/4x4_asian_disease_20251231_214700.json
 
@@ -31,7 +35,31 @@ from collections import Counter
 from datetime import datetime
 from pathlib import Path
 
+import yaml
+
 from src.agents.choice_extractor import ChoiceExtractor
+
+
+# Default metrics config (framing effect with gain/loss suffixes)
+DEFAULT_METRICS = {
+    "type": "framing_effect",
+    "gain_suffix": "_gain",
+    "loss_suffix": "_loss",
+    "choices": {
+        "certain": "A",
+        "risky": "B",
+        "unclear": "unclear",
+    }
+}
+
+
+def load_experiment_config(experiment_name: str) -> dict | None:
+    """Load experiment config from experiments/<name>/config.yaml."""
+    config_path = Path("experiments") / experiment_name / "config.yaml"
+    if not config_path.exists():
+        return None
+    with open(config_path) as f:
+        return yaml.safe_load(f)
 
 
 def log(msg: str = "", flush: bool = True):
@@ -49,6 +77,12 @@ def parse_args():
         "results_file",
         type=Path,
         help="Path to results JSON file with raw responses"
+    )
+    parser.add_argument(
+        "--experiment",
+        type=str,
+        default=None,
+        help="Experiment name to load config from (e.g., 'fle-4x4')"
     )
     parser.add_argument(
         "--filter",
@@ -229,6 +263,40 @@ def compute_stats(judgments: list[dict]) -> dict:
     }
 
 
+def compute_framing_effects(judged_conds: dict, metrics: dict) -> dict:
+    """Compute framing effects from judged conditions using metrics config.
+
+    Returns dict of framing effect entries to add to conditions.
+    """
+    if metrics.get("type") != "framing_effect":
+        return {}
+
+    gain_suffix = metrics.get("gain_suffix", "_gain")
+    loss_suffix = metrics.get("loss_suffix", "_loss")
+    certain_choice = metrics.get("choices", {}).get("certain", "A")
+
+    effects = {}
+    gain_conds = [c for c in judged_conds if c.endswith(gain_suffix)]
+
+    for gain_key in sorted(gain_conds):
+        loss_key = gain_key.replace(gain_suffix, loss_suffix)
+        if loss_key in judged_conds:
+            # Get probability of certain choice in each frame
+            p_certain_gain = judged_conds[gain_key].get(f"p_{certain_choice}", 0)
+            p_certain_loss = judged_conds[loss_key].get(f"p_{certain_choice}", 0)
+            delta = p_certain_gain - p_certain_loss
+
+            # Store framing effect
+            fe_key = gain_key.replace(gain_suffix, "_framing_effect")
+            effects[fe_key] = {
+                "delta": delta,
+                f"p_{certain_choice}_gain": p_certain_gain,
+                f"p_{certain_choice}_loss": p_certain_loss,
+            }
+
+    return effects
+
+
 def filter_conditions(conditions: dict, pattern: str | None) -> list[str]:
     """Filter condition names by glob pattern."""
     names = [k for k in conditions.keys() if "framing_effect" not in k]
@@ -246,6 +314,17 @@ async def main():
     if not args.results_file.exists():
         log(f"Error: File not found: {args.results_file}")
         sys.exit(1)
+
+    # Load experiment config if specified
+    metrics = DEFAULT_METRICS.copy()
+    if args.experiment:
+        config = load_experiment_config(args.experiment)
+        if config is None:
+            log(f"Warning: Experiment config not found for '{args.experiment}', using defaults")
+        else:
+            log(f"Loaded config: experiments/{args.experiment}/config.yaml")
+            if "metrics" in config:
+                metrics = {**DEFAULT_METRICS, **config["metrics"]}
 
     # Load results
     log(f"Loading: {args.results_file}")
@@ -309,10 +388,12 @@ async def main():
     judged_results = {
         "metadata": {
             **metadata,
+            "experiment": args.experiment,
             "judge_model": args.model,
             "judge_timestamp": datetime.now().isoformat(),
             "filter_pattern": args.filter,
             "concurrency": args.concurrency,
+            "metrics_type": metrics.get("type"),
         },
         "conditions": {}
     }
@@ -355,32 +436,24 @@ async def main():
         log(f"  => P(A)={stats['p_A']:.1%}, P(B)={stats['p_B']:.1%}, "
             f"unclear={stats['p_unclear']:.1%} ({cond_elapsed:.1f}s, {rate:.1f} req/s)")
 
-    # Compute framing effects for matched pairs
-    log(f"\n{'='*60}")
-    log("FRAMING EFFECTS")
-    log(f"{'='*60}")
+    # Compute metrics based on config
+    if metrics.get("type") == "framing_effect":
+        log(f"\n{'='*60}")
+        log("FRAMING EFFECTS")
+        log(f"{'='*60}")
 
-    # Find gain/loss pairs
-    judged_conds = judged_results["conditions"]
-    gain_conds = [c for c in judged_conds if c.endswith("_gain")]
+        judged_conds = judged_results["conditions"]
+        framing_effects = compute_framing_effects(judged_conds, metrics)
 
-    for gain_key in sorted(gain_conds):
-        loss_key = gain_key.replace("_gain", "_loss")
-        if loss_key in judged_conds:
-            p_a_gain = judged_conds[gain_key]["p_A"]
-            p_a_loss = judged_conds[loss_key]["p_A"]
-            delta = p_a_gain - p_a_loss
-
-            # Store framing effect
-            fe_key = gain_key.replace("_gain", "_framing_effect")
-            judged_results["conditions"][fe_key] = {
-                "delta": delta,
-                "p_A_gain": p_a_gain,
-                "p_A_loss": p_a_loss,
-            }
-
-            log(f"{gain_key.replace('_gain', '')}: Δ = {delta:+.1%} "
-                f"(P(A|gain)={p_a_gain:.1%}, P(A|loss)={p_a_loss:.1%})")
+        # Add to results and log
+        for fe_key, fe_data in framing_effects.items():
+            judged_results["conditions"][fe_key] = fe_data
+            base_name = fe_key.replace("_framing_effect", "")
+            certain_choice = metrics.get("choices", {}).get("certain", "A")
+            p_gain = fe_data.get(f"p_{certain_choice}_gain", 0)
+            p_loss = fe_data.get(f"p_{certain_choice}_loss", 0)
+            log(f"{base_name}: Δ = {fe_data['delta']:+.1%} "
+                f"(P({certain_choice}|gain)={p_gain:.1%}, P({certain_choice}|loss)={p_loss:.1%})")
 
     # Save results
     if args.output:
