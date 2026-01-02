@@ -160,4 +160,4 @@ If you use this work, please cite:
 
 ## License
 
-MIT
+All rights reserved.
