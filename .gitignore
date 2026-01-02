@@ -35,6 +35,7 @@ ENV/
 adapters/
 results/
 *.pdf
+!paper/pre-print/*.pdf
 *.txt
 
 # Model weights (downloaded)
