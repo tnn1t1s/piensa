@@ -8,7 +8,9 @@ A prominent theoretical explanation proposes that L2 processing is more effortfu
 
 Large Language Models are trained on multilingual corpora and can process text in many languages. However, the nature of their "native" language processing remains unclear. Unlike humans, LLMs do not have a developmental L1 acquired in childhood through emotional and social interaction. Yet, the training data distribution is heavily skewed toward English, potentially creating asymmetries in response patterns across languages.
 
-We evaluate whether language-specific LoRA (Low-Rank Adaptation) fine-tuning can serve as a computational operationalization of L1/L2-like processing asymmetries. By training adapters on instruction-following data in specific languages, we test whether adapter-prompt language alignment predicts framing effect magnitude in a manner consistent with the FLE: stronger biases when matched (operationalizing L1), weaker biases when mismatched (operationalizing L2). This is a test of a specific computational hypothesis, not a claim about cognitive mechanisms.
+We evaluate whether language-specific LoRA (Low-Rank Adaptation) fine-tuning can serve as a computational operationalization of L1/L2-like processing asymmetries. By training adapters on instruction-following data in specific languages, we test whether adapter-prompt language alignment predicts framing effect magnitude in a manner consistent with the FLE: stronger biases when matched (operationalizing L1), weaker biases when mismatched (operationalizing L2).
+
+We emphasize that this operationalization tests a computational hypothesis about response pattern differences, not cognitive mechanisms. LoRA adapters do not capture developmental acquisition, emotional resonance, or the automaticity/effort distinction central to human FLE theories. We do not measure effort, emotional processing, or System 1/2 engagement. Results should be interpreted as testing whether adapter-prompt alignment predicts choice asymmetries in a forced-choice task, not whether LLMs exhibit L1/L2-like processing.
 
 ### Related Work
 

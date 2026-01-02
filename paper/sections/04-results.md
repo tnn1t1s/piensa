@@ -1,6 +1,8 @@
 ## Results
 
-All 16 adapter-prompt combinations produced interpretable responses with low unclear rates (median 0%, maximum 18%), enabling analysis across the full experimental design. Every condition exhibited a positive framing effect, indicating that Mistral-7B produces response patterns consistent with the classic Tversky-Kahneman findings in the tested conditions: higher probability of choosing the certain option under gain framing than loss framing.
+All 16 adapter-prompt combinations produced interpretable responses with low unclear rates (median 0%, maximum 18%), enabling analysis across the full experimental design. Every condition exhibited a positive framing effect, indicating that Mistral-7B exhibits differential response patterns between frames matching the directional asymmetry reported in Tversky & Kahneman (1981): higher probability of choosing the certain option under gain framing than loss framing.
+
+Without parallel human data on these exact stimuli, we cannot assess whether the observed framing effects (+6% to +62%) match human magnitudes or represent "strong" vs. "weak" effects. Comparisons to Costa et al. (2014) are directional only.
 
 ### Complete Results
 

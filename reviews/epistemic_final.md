@@ -3,198 +3,174 @@
 Running epistemic reviewer (anthropic/claude-sonnet-4.5)...
 # Epistemic Hygiene Review: Claim-Scope Audit
 
-## Critical Overreaches
+## Abstract
 
-### 1. Abstract - Mechanism Conflation
-**Quoted:** "All 16 conditions showed positive framing effects (+6% to +62%), indicating that Mistral-7B produces response patterns consistent with the classic Tversky-Kahneman findings in this task."
+- **"replicating the directional pattern observed in Tversky & Kahneman (1981)"**
+  - **Overreach**: Implies your experiment replicates their finding. You tested LLMs with LoRA adapters, not humans making decisions.
+  - **Why**: "Replicating" suggests reproducing the phenomenon. You observed the same directional asymmetry in a completely different system.
+  - **Suggested revision**: "showing the same directional asymmetry as reported in Tversky & Kahneman (1981)"
 
-**Why it overreaches:** "Consistent with" implies validation of the underlying psychological mechanism. You measured differential choice frequencies in response to gain/loss framings. You did not measure cognitive biases, emotional processing, or System 1/2 reasoning.
+- **"choice frequencies in a forced-choice task, not cognitive biases, emotional processing, or reasoning mode"**
+  - **Strength**: Excellent scope limitation in abstract.
 
-**Suggested rewrite:** "All 16 conditions showed differential response patterns between gain and loss frames (+6% to +62%), replicating the directional pattern observed in Tversky & Kahneman (1981): higher selection rates for the certain option under gain framing."
+## Introduction
 
----
+- **"bilinguals exhibited reduced cognitive biases when making decisions in their second language"**
+  - **Overreach**: You cite Costa et al. but the phrasing implies universal truth rather than experimental finding.
+  - **Why**: "Exhibited" generalizes beyond specific experimental conditions.
+  - **Suggested revision**: "Costa et al. (2014) reported that, in their experiments, bilinguals exhibited reduced cognitive biases..."
 
-### 2. Introduction - Universal Claim About What LLMs Do
-**Quoted:** "However, the nature of their 'native' language processing remains unclear."
+- **"Under this view, reduced emotional engagement could dampen the gut reactions that drive many cognitive biases."**
+  - **Overreach**: "Drive many cognitive biases" is a universal claim about mechanisms not tested in your study or necessarily established in cited work.
+  - **Why**: You haven't tested what "drives" biases.
+  - **Suggested revision**: "Under this theoretical account proposed in the literature, reduced emotional engagement might contribute to observed changes in decision patterns."
 
-**Why it overreaches:** You tested one model (Mistral-7B) with specific adapters. This statement generalizes to "LLMs" as a class.
+- **"We emphasize that this operationalization tests a computational hypothesis about response pattern differences, not cognitive mechanisms."**
+  - **Strength**: Excellent framing. However, elsewhere you slip into mechanistic language.
 
-**Suggested rewrite:** "However, the nature of Mistral-7B's language-specific processing in the tested conditions remains unclear."
+## Related Work
 
----
+- **"Studies applying framing manipulations analogous to those used in human experiments report that LLMs produce response patterns consistent with canonical human preferences"**
+  - **Acceptable**: "Consistent with" is appropriately scoped.
 
-### 3. Introduction - Cognitive Mechanism Attribution
-**Quoted:** "A prominent theoretical explanation proposes that L2 processing is more effortful and less emotionally resonant than L1 processing, which may promote more deliberative, 'System 2' reasoning (Kahneman, 2011)."
+- **"may reflect surface-level linguistic variation, decoding artifacts, or instruction-following instability rather than distinct internal processing modes"**
+  - **Problematic phrase**: "rather than" implies you know what's NOT happening.
+  - **Why**: You cannot rule out mechanisms you haven't tested.
+  - **Suggested revision**: "may reflect surface-level linguistic variation, decoding artifacts, or instruction-following instability, complicating interpretation of these patterns as distinct internal processing modes"
 
-**Why it overreaches:** You cite this human theory in your introduction without immediately clarifying that you are NOT testing effort, emotion, or deliberation. The rhetorical framing invites readers to assume your operationalization captures these constructs.
+## Methods
 
-**Suggested rewrite:** Move this to related work and add: "We do not measure effort, emotional processing, or System 1/2 engagement. Our operationalization tests only whether adapter-prompt language alignment predicts response pattern differences in a forced-choice task."
+- **"This yields 32 unique experimental conditions"**
+  - **Acceptable**: Factual description of design.
 
----
+- **"Role-Binding Prefix (English version): 'You are a participant in a study.'"**
+  - **Minor concern**: "Role-binding" implies a cognitive mechanism (that the model adopts a role).
+  - **Why**: You haven't tested whether this instruction actually "binds" anything internally.
+  - **Suggested revision**: Use "role-instruction prefix" or simply "instruction prefix" to describe what you did rather than its supposed mechanism.
 
-### 4. Results Section Header
-**Quoted:** "indicating that Mistral-7B produces response patterns consistent with the classic Tversky-Kahneman findings in this task: higher probability of choosing the certain option under gain framing than loss framing."
+## Results
 
-**Why it overreaches:** This is better but still implies psychological equivalence. "Classic findings" refers to human cognitive biases; you observed differential choice frequencies.
+- **"All 16 adapter-prompt combinations produced interpretable responses"**
+  - **Acceptable**: Describes what was classified, not why.
 
-**Suggested rewrite:** "indicating that Mistral-7B exhibits differential response patterns between frames matching the directional asymmetry reported in Tversky & Kahneman (1981)."
+- **"indicating that Mistral-7B exhibits differential response patterns between frames matching the directional asymmetry reported in Tversky & Kahneman (1981)"**
+  - **Overreach**: "Matching" implies equivalence of phenomena.
+  - **Why**: Same directional pattern ≠ same phenomenon.
+  - **Suggested revision**: "showing the same directional asymmetry as reported in Tversky & Kahneman (1981): higher probability of choosing the certain option under gain framing"
 
----
+- **"Without parallel human data on these exact stimuli, we cannot assess whether the observed framing effects (+6% to +62%) match human magnitudes"**
+  - **Strength**: Excellent scope limitation.
 
-### 5. Analysis - Causal Language
-**Quoted:** "The data suggest that prompt language exerts a stronger influence on framing effects than adapter-prompt matching in this task and model."
+## Analysis
 
-**Why it overreaches:** You observed correlations between prompt language and response differences. "Exerts influence" implies a causal mechanism you did not test (no intervention on prompt language while holding meaning constant).
+- **"This pattern is consistent with a weak FLE hypothesis if adapter training creates language-specific response tendencies"**
+  - **Overreach**: "If adapter training creates" implies you tested mechanism.
+  - **Why**: You tested correlation (adapter-prompt matching × effect size), not whether adapter training "creates" anything.
+  - **Suggested revision**: "This pattern is consistent with a weak FLE hypothesis under which adapter-prompt matching would predict larger effects"
 
-**Suggested rewrite:** "The data show that variation in prompt language predicts larger differences in response patterns than adapter-prompt matching in this task and model."
+- **"The Spanish version uses different vocabulary choices"**
+  - **Minor**: Fine as candidate explanation, but ensure you don't later claim this IS the explanation without testing.
 
----
+- **"Processing English through a Spanish-tuned adapter may disrupt the model's typical decision heuristics"**
+  - **Overreach**: "Decision heuristics" and "disrupt" both imply mechanisms you haven't observed.
+  - **Why**: You observed output patterns, not heuristics or disruption processes.
+  - **Suggested revision**: "The combination of Spanish adapter with English prompts may produce different output patterns than other adapter-prompt combinations"
 
-### 6. Discussion - Mechanism Attribution
-**Quoted:** "The FLE in humans has been theoretically attributed to proposed differences in processing characteristics during L2 use, creating psychological distance that may enable more analytical decision-making."
+## Discussion
 
-**Why it overreaches:** You then say your operationalization "assumed that adapter-prompt matching could approximate this L1/L2 distinction." This collapses proxy failure (adapter ≠ L2 processing) with evaluation failure (you didn't measure psychological distance or analytical processing).
+- **"Our operationalization assumed that adapter-prompt matching could approximate this L1/L2 distinction."**
+  - **Acceptable**: You state it as an assumption.
 
-**Suggested rewrite:** "The FLE in humans has been theoretically attributed to proposed differences in processing characteristics during L2 use. Our operationalization tested whether adapter-prompt matching predicts response pattern asymmetries directionally similar to human L1/L2 differences, without measuring processing characteristics, psychological distance, or reasoning mode."
+- **"We adopt L1/L2 terminology as an interpretive frame to motivate the experimental design, but acknowledge that the mapping is indirect"**
+  - **Strength**: Excellent epistemic hygiene.
 
----
+- **"Costa et al. (2014) found *reduced* framing bias in L2 conditions, not just magnitude variation."**
+  - **Strength**: Important distinction drawn.
 
-### 7. Discussion - Universal Negation
-**Quoted:** "LLMs do not exhibit FLE-like phenomena."
+- **"LoRA adapters may modify surface generation capabilities without affecting response patterns in a way analogous to L1/L2 fluency differences."**
+  - **Overreach**: "Surface generation capabilities" vs. deeper processes.
+  - **Why**: You haven't measured what's "surface" vs. "deep" in the model.
+  - **Suggested revision**: "LoRA adapters may modify output distributions without creating the systematic asymmetries that would be predicted if adapter-prompt matching approximated L1/L2 processing differences"
 
-**Why it overreaches:** You tested one model, one task, one adapter configuration. This generalizes to all LLMs.
+- **"The architecture may produce similar response patterns across adapter-prompt combinations without the response asymmetries that would be predicted if adapter matching created L1/L2-like processing differences."**
+  - **Acceptable**: Appropriately conditional ("may," "if").
 
-**Suggested rewrite:** "Mistral-7B does not exhibit the predicted adapter-based response pattern asymmetry in this task."
+- **"Mismatched conditions may simply confuse the model"**
+  - **Overreach**: "Confuse" anthropomorphizes and implies internal state.
+  - **Why**: You measured output distributions, not confusion.
+  - **Suggested revision**: "Mismatched conditions may reduce response consistency or introduce variance"
 
----
+- **"The 15% unclear rate in ZH+HE suggests comprehension failures"**
+  - **Overreach**: "Comprehension failures" attributes cognitive mechanism.
+  - **Why**: Unclear outputs don't necessarily indicate failed comprehension—could be instruction-following issues, formatting problems, etc.
+  - **Suggested revision**: "The 15% unclear rate in ZH+HE indicates reduced ability to produce classifiable responses in this condition"
 
-### 8. Discussion - "Theoretical Implications" Section Title
+- **"Understanding when and why such interference occurs"**
+  - **Overreach**: "Interference" implies a specific mechanism (one process blocking another).
+  - **Why**: You observed non-compositional effects, but haven't characterized the mechanism as interference.
+  - **Suggested revision**: "Understanding when and why such non-compositional effects occur"
 
-**Why it overreaches:** You did not test any theory of cognition. You tested a computational operationalization.
+## Conclusion
 
-**Suggested rewrite:** Retitle to "Interpretation of Adapter-Based Operationalization" or "Operationalization Validity."
+- **"We tested whether language-specific LoRA adapters could approximate L1/L2-like processing asymmetries"**
+  - **Acceptable**: "Approximate" is appropriately tentative.
 
----
+- **"showing the same directional asymmetry as reported in Tversky & Kahneman (1981)"**
+  - **Strength**: Good revision from earlier "replicating."
 
-### 9. Discussion - Unwarranted Cognitive Leap
-**Quoted:** "The architecture may produce similar response patterns across languages without the differential processing characteristics hypothesized to underlie human FLE."
-
-**Why it overreaches:** You did not measure "processing characteristics." You measured output frequencies. You're speculating about unmeasured internal states.
-
-**Suggested rewrite:** "The architecture may produce similar response patterns across adapter-prompt combinations without the response asymmetries that would be predicted if adapter matching created L1/L2-like processing differences."
-
----
-
-### 10. Limitations - False Parallel
-**Quoted:** "This concern applies equally to the original human FLE studies, where probability comprehension was not systematically controlled."
-
-**Why it overreaches:** You don't know whether probability comprehension was controlled in Costa et al. (2014) or related studies. This is an unsupported claim about human research methods.
-
-**Suggested rewrite:** "We did not control for cross-language variation in how the model processes probabilistic statements. If similar variation exists in human probability comprehension (not reported in Costa et al., 2014), it could contribute to observed differences independently of framing sensitivity."
-
----
-
-### 11. Conclusion - Mechanism Language
-**Quoted:** "higher preference for the certain option"
-
-**Why it overreaches:** "Preference" implies internal valuation. You measured output frequencies.
-
-**Suggested rewrite:** "higher selection rate for the certain option"
-
----
-
-### 12. Conclusion - Vague Comparative
-**Quoted:** "typical behavior"
-
-**Why it overreaches:** What is the baseline for "typical"? This is undefined.
-
-**Suggested rewrite:** "behavior similar to other conditions" or "framing effects in the +30-50% range"
-
----
-
-### 13. Conclusion - Hybrid Claim
-**Quoted:** "These results neither cleanly support nor refute the hypothesis that LoRA adapters can operationalize FLE-like processing asymmetries."
-
-**Why it overreaches:** "FLE-like processing asymmetries" conflates the tested prediction (response pattern differences correlated with adapter-prompt matching) with unmeasured processing characteristics.
-
-**Suggested rewrite:** "These results provide mixed evidence for the hypothesis that adapter-prompt language alignment predicts response pattern differences in this task."
-
----
-
-## Rhetorical Drift Patterns
-
-### Pattern 1: "Consistent with" Drift
-Multiple instances use "consistent with" to create equivalence between your measured outputs and human cognitive phenomena:
-- "response patterns consistent with..."
-- "observations consistent with..."
-
-**Fix:** Replace with "matching the directional pattern of" or "showing the same choice asymmetry as."
+- **"raises questions about the validity of the operationalization"**
+  - **Strength**: Appropriate to question your own operationalization based on anomalies.
 
 ---
 
-### Pattern 2: Proxy-Evaluation Collapse
-The paper frequently collapses:
-- What adapters ARE (frozen base + low-rank parameter shifts)
-- What they MIGHT proxy for (L1/L2 processing differences)
-- What you MEASURED (choice frequencies)
-- What you DID NOT measure (emotion, effort, deliberation, psychological distance)
+## Systematic Issues Across Paper
 
-**Example from Discussion:** "Our operationalization assumed that adapter-prompt matching could approximate this L1/L2 distinction."
+### 1. **Proxy/Operationalization Collapse**
 
-**Fix:** Systematically separate these levels in every discussion section paragraph.
+Multiple instances treat the operationalization (adapter-prompt matching) as if it IS the thing being studied (L1/L2 processing):
 
----
+- "adapter training creates language-specific response tendencies" → measured correlation, not creation
+- "processing English through a Spanish-tuned adapter" → describes computational operation as if it's analogous to bilingual processing
 
-### Pattern 3: Universal Quantifiers
-- "LLMs do not exhibit..."
-- "the nature of their 'native' language processing..."
-- "adapter effects may be non-compositional"
+**Fix**: Consistently distinguish between (a) what you manipulated (adapter-prompt matching), (b) what you measured (output distributions), and (c) what you're analogizing to (L1/L2 processing).
 
-**Fix:** Scope to tested model: "Mistral-7B with the tested adapters..."
+### 2. **Mechanistic Language Without Mechanistic Evidence**
 
----
+Phrases implying internal processes you didn't measure:
+- "decision heuristics"
+- "comprehension failures"  
+- "confuse the model"
+- "interference"
+- "role-binding" (as mechanism vs. instruction type)
 
-## Structural Issues
+**Fix**: Use observational language: "output patterns," "response distributions," "classifiable outputs," "non-compositional effects."
 
-### Issue 1: Introduction Sets Up Undeliverable Promise
-The introduction discusses human emotion, System 2 reasoning, and developmental L1 acquisition, creating reader expectations that adapter-prompt matching tests these constructs. You later acknowledge the mapping is indirect, but the damage is done.
+### 3. **"Consistent With" Used Appropriately, But Watch Slippage**
 
-**Fix:** Open with: "We test a computational hypothesis: does adapter-prompt language alignment predict response pattern asymmetries in a forced-choice task? This operationalization is inspired by human FLE research but does not measure emotional processing, cognitive effort, or reasoning mode."
+You generally use "consistent with" correctly, but occasionally slip into stronger claims:
+- "if adapter training creates" (mechanism) vs. "if adapter-prompt matching predicts" (correlation)
 
----
-
-### Issue 2: "Theoretical Implications" Overreach
-You have NO theoretical implications for human cognition. You have methodological findings about adapter behavior.
-
-**Fix:** Rename section "Implications for Adapter-Based Operationalizations" and remove all speculation about what this means for human dual-process theory.
+**Fix**: Maintain distinction between consistency (pattern alignment) and confirmation (mechanism validation).
 
 ---
 
-## Positive Examples (Where Scoping Is Done Well)
+## Overall Assessment
 
-1. **Methods precision:** "Each trial was a single-turn, stateless generation with no context carryover between trials." — Excellent operational specificity.
+**Strengths**:
+- Abstract clearly scopes to "choice frequencies" not "cognitive biases"
+- Repeated acknowledgment that adapters don't capture emotional processing, developmental acquisition, etc.
+- Explicit statement: "we measure X, not Y"
+- Discussion appropriately questions operationalization validity
+- Excellent limitation: "Without parallel human data..."
 
-2. **Appendix disclosure:** Providing full prompts allows readers to judge validity themselves.
+**Required Revisions**:
+1. Remove "replicating" language—you observed the same directional pattern in a different system
+2. Eliminate mechanistic claims about internal processes (heuristics, comprehension, confusion, interference)
+3. Clarify that "role-binding" describes instruction type, not verified internal mechanism
+4. Reframe "creates" → "predicts" when discussing adapter-effect correlations
+5. Change "comprehension failures" → "reduced response validity" or similar observational term
 
-3. **Limitation acknowledgment:** "Without parallel human data on these exact stimuli, we cannot assess whether the observed framing effects match human magnitudes." — This should be promoted to the main text.
+**Success Metric**: 
+After revision, a reviewer cannot claim: "You say you're only testing response patterns, but then you claim adapters 'disrupt decision heuristics' or that you've 'replicated' the human FLE."
 
-4. **Explicit non-claim:** "This is a test of a specific computational hypothesis, not a claim about cognitive mechanisms." (Introduction) — Good, but undercut by later rhetorical drift.
-
----
-
-## Summary Recommendation
-
-**Core problem:** The paper treats "response pattern differences correlated with experimental manipulations" as equivalent to "framing effects" (a cognitive construct) and "FLE-like phenomena" (a processing mechanism claim).
-
-**Required revisions:**
-1. Replace all "framing effect" language with "framing-correlated response asymmetry" or "gain/loss choice differential"
-2. Remove all "consistent with human findings" language; replace with "matching the directional pattern"
-3. Scope all claims to Mistral-7B with tested adapters
-4. Move all cognitive mechanism discussion to "inspirations for the operationalization" and clearly label as untested
-5. Retitle "Theoretical Implications" → "Operationalization Validity"
-6. Add to abstract: "We measure choice frequencies in a forced-choice task, not cognitive biases, emotional processing, or reasoning mode."
-
-**After revision, a hostile reviewer should not be able to say:**
-- "You claim this model exhibits cognitive biases, but you only measured output tokens"
-- "You claim adapters create L2-like processing, but you never measured processing"
-- "You claim this validates/invalidates human FLE theory, but you tested a computational proxy"
+The paper is close to excellent epistemic hygiene. The required changes are mostly find-replace of overreaching mechanism language with observational pattern language.

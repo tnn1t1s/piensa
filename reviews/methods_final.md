@@ -1,70 +1,120 @@
 /Users/palaitis/Development/piensa/tools/bin/review-methods:46: DeprecationWarning: `OpenAIModel` was renamed to `OpenAIChatModel` to clearly distinguish it from `OpenAIResponsesModel` which uses OpenAI's newer Responses API. Use that unless you're using an OpenAI Chat Completions-compatible API, or require a feature that the Responses API doesn't support yet like audio.
   model = OpenAIModel(model_name, provider='openrouter')
 Running methods reviewer (anthropic/claude-sonnet-4)...
-## Methods & Reproducibility Review
+# Methods & Reproducibility Review
 
-### Experimental Design Clarity
-**Clear**: The 4×4×2 factorial design is well-specified with explicit factor levels and trial counts (50 per condition).
+## Experimental Design: Clear
+**Assessment: Clear**
+- 4×4×2 factorial design is well-specified
+- 32 conditions × 50 trials = 1600 total responses enables statistical analysis
+- Single-turn stateless generation prevents context carryover
+- Fixed random seed (42) specified for training reproducibility
 
-**Clear**: Single-turn, stateless generation approach eliminates context carryover confounds.
+## Adapter Training Details: Needs Clarification
 
-**Needs clarification**: Training data sample sizes vary slightly (4,750-5,000) without explanation for the Chinese dataset reduction.
+**LoRA Configuration: Clear**
+- All hyperparameters specified (rank=8, alpha=16, lr=1e-5, etc.)
+- Target layers clearly defined (final 16 blocks, Q/K/V/O projections)
+- Training iterations fixed at 100 (no early stopping)
 
-### Adapter Training Details
-**Clear**: LoRA hyperparameters are fully specified (rank=8, alpha=16, lr=1e-5, 100 iterations).
+**Training Data Issues:**
+- Chinese dataset size mismatch (4,750 vs 5,000) - **needs justification**
+- Hebrew/Chinese translations not human-verified - **quality control risk**
+- Training data source variation across languages could introduce confounds
+- Final validation losses vary substantially (0.93-1.17) - **convergence unclear**
 
-**Clear**: Target layers clearly identified (final 16 blocks, Q/K/V/O projections).
+**Missing Details:**
+- No validation methodology during training
+- No adapter quality assessment beyond loss values
+- Training time/computational cost not reported
 
-**Clear**: Training data sources documented with validation loss reporting.
+## Inference Parameters: Clear
+**Assessment: Clear**
+- Temperature=0.7, top-p=1.0 (disabled), max_tokens=256 all specified
+- Hardware (M3 Max) and software versions (MLX v0.21.1) documented
+- Mistral chat template formatting specified
 
-**Missing**: No mention of validation/stopping criteria beyond fixed iteration count. Risk of under/over-training across languages given different final validation losses (0.93-1.17).
+**Potential Issue:**
+- Temperature=0.7 introduces sampling variance - results may vary on replication despite fixed seed
 
-### Inference Parameters
-**Clear**: All generation parameters specified (temperature=0.7, max_tokens=256, etc.).
+## Response Classification: Clear
+**Assessment: Clear**
+- Four-category classification system (A/B/unclear/refused) is interpretable
+- GPT-4-turbo judge with temperature=0.0 ensures determinism
+- >95% inter-rater reliability with manual validation on 100 samples
+- Structured JSON output format specified
 
-**Clear**: Chat template usage documented.
+**Methodological Strength:**
+- Judge receives only response text (not prompt) prevents bias
+- "Interpret generously" instruction reduces false unclear classifications
 
-**Clear**: Quantization approach (4-bit MLX) specified.
+## Unclear-Rate Handling: Clear
+**Assessment: Clear**
+- Explicit reporting of unclear rates by condition (0-18% range)
+- Effect calculation formula clearly shows unclear responses excluded
+- Low unclear rates (14/16 conditions ≤4%) enable confident interpretation
+- ZH+HE outlier (15% unclear) appropriately flagged
 
-### Response Classification Rules
-**Clear**: Four-category classification system (A/B/unclear/refused) with operational definitions.
+## Key Reproducibility Risks
 
-**Clear**: GPT-4-turbo classification at temperature=0.0 for determinism.
+### 1. Training Data Quality Variation
+**Risk Level: Moderate**
+- English/Spanish human-verified vs Hebrew/Chinese LLM-translated
+- Could systematically bias cross-language comparisons
+- **Mitigation needed:** Quality assessment of translations
 
-**Clear**: Inter-rater reliability validation (95% agreement on 100-sample validation).
+### 2. Adapter Convergence Uncertainty  
+**Risk Level: Low-Moderate**
+- Fixed 100 iterations without convergence criteria
+- Validation loss variation (0.93-1.17) suggests different training states
+- **Impact:** May contribute to adapter-specific anomalies (e.g., Spanish adapter)
 
-**Needs clarification**: "Interpret generously" instruction is vague - could bias toward valid responses and mask actual comprehension failures.
+### 3. Inference Sampling Variance
+**Risk Level: Low**
+- Temperature=0.7 means results will vary slightly on replication
+- **Mitigation:** Authors acknowledge this limitation explicitly
 
-### Unclear-Rate Handling
-**Clear**: Unclear rates reported for all conditions with explicit thresholds.
+## Evaluation Artifact Handling: Clear
+**Assessment: Clear**
+- Role-binding prefix successfully constrains response format
+- Low unclear rates demonstrate effective artifact mitigation
+- Spanish adapter anomaly (ES+EN) correctly identified as potential artifact rather than interpreted as meaningful result
 
-**Clear**: Framing effect calculation acknowledges that low unclear rates make the metric equivalent whether computed over all trials or valid responses only.
+## Missing Critical Details
 
-**Interpretability risk**: The 15% unclear rate in ZH+HE condition could indicate systematic comprehension failure, but this is treated as a data quality issue rather than a substantive finding about adapter-prompt interference.
+### 1. Training Validation Methodology
+**Status: Missing**
+- How was convergence assessed with fixed iterations?
+- Were adapters validated on held-out instruction-following tasks?
 
-### Critical Reproducibility Issues
+### 2. Cross-Language Prompt Equivalence
+**Status: Acknowledged Limitation**
+- Authors note translation quality variation
+- No systematic assessment of linguistic equivalence across versions
 
-**Missing**: No seed specification for model inference (only training seed=42 mentioned). Temperature=0.7 with uncontrolled seeds could produce different results on replication.
+## Replication Feasibility
 
-**Missing**: MLX version and hardware specifications not provided. Quantization implementations can vary across platforms.
+**Can experiment be re-run? Yes**
+- All hyperparameters, datasets, and procedures specified
+- Code availability implied ("provided scripts")
+- Hardware requirements documented
 
-**Needs clarification**: "100-response validation sample" for inter-rater reliability - unclear if this was drawn from the actual experimental data or separate validation set.
+**Can results be interpreted? Yes**
+- Clear unclear-rate reporting enables confidence assessment
+- Effect size calculations transparent
+- Anomalous conditions (ES+EN, ZH+HE high unclear rate) properly flagged
 
-### Evaluation Failure Handling
+## Overall Assessment: Clear with Minor Clarifications Needed
 
-**Interpretability risk**: The Spanish adapter anomaly (6% framing effect due to 94-100% risk-seeking) is treated as an interesting finding rather than a potential evaluation failure. This extreme response pattern suggests possible adapter training failure or prompt comprehension breakdown that may compromise the interpretability of this condition.
+**Strengths:**
+- Comprehensive experimental design documentation
+- Transparent handling of evaluation artifacts (unclear responses)
+- Honest reporting of anomalous results and limitations
+- Low unclear rates enable confident interpretation
 
-**Clear**: Low unclear rates (0-4% in most conditions) are appropriately highlighted as enabling confident interpretation.
+**Areas for Clarification:**
+- Training data quality control procedures
+- Chinese dataset size justification  
+- Adapter convergence assessment methodology
 
-**Missing**: No explicit criteria for identifying when an adapter-prompt combination should be excluded due to systematic failure vs. treated as interpretable data.
-
-### Replication Feasibility
-
-**Clear**: Sufficient detail provided for model architecture, training procedure, and evaluation setup.
-
-**Needs clarification**: Translation quality variation acknowledged as limitation but no systematic quality control described. Hebrew/Chinese translations relied on LLM without human verification.
-
-**Success criterion met**: A reader could re-run the experiment, though minor implementation differences (MLX version, inference seeds) might produce slightly different numerical results. The overall patterns should replicate.
-
-### Summary
-The experimental design is generally well-documented with clear specifications for most critical parameters. The main interpretability risks involve: (1) potential bias in the "generous interpretation" classification rule, (2) treating extreme response patterns as findings rather than evaluation failures, and (3) missing inference randomization control. The Spanish adapter anomaly represents either a genuine finding about adapter-prompt interference or a systematic evaluation failure - the current treatment assumes the former without ruling out the latter.
+**Success Criterion Met:** A reader could re-run this experiment and understand which results are interpretable. The authors appropriately flag the Spanish adapter anomaly and high unclear rate conditions as potentially problematic rather than over-interpreting them.

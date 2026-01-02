@@ -33,7 +33,7 @@ In both frames, the Spanish adapter overwhelmingly chose the risky option B (94%
 Possible explanations:
 
 1. **Training data artifact:** The Spanish Alpaca training data may have induced a general risk-seeking disposition that overrides frame-dependent preferences when processing English
-2. **Language interference:** Processing English through a Spanish-tuned adapter may disrupt the model's typical decision heuristics
+2. **Adapter-prompt mismatch:** The combination of Spanish adapter with English prompts may produce different output patterns than other adapter-prompt combinations
 3. **Alignment mismatch:** The combination of Spanish adapter weights with English instruction patterns may create an adversarial activation pattern
 
 Notably, the Spanish adapter shows typical framing behavior on non-English prompts (ES: +48%, HE: +30%, ZH: +38%), suggesting the anomaly is specific to the English prompt condition.
@@ -49,7 +49,7 @@ The English adapter shows a clear gradient in framing effect magnitude based on 
 | HE | +26% |
 | ZH | +18% |
 
-The framing effect magnitude follows this order: English > Spanish > Hebrew > Chinese. This pattern is consistent with a weak FLE hypothesis if adapter training creates language-specific response tendencies that are strongest for matched conditions. However, this gradient does not appear for other adapters:
+The framing effect magnitude follows this order: English > Spanish > Hebrew > Chinese. This pattern is consistent with a weak FLE hypothesis if adapter-prompt matching predicts larger effects for matched conditions. However, this gradient does not appear for other adapters:
 
 - **HE adapter:** HE (+46%) < ES (+62%), no gradient
 - **ZH adapter:** ZH (+42%) < ES (+50%), no gradient
@@ -68,7 +68,7 @@ The Foreign Language Effect predicts that L1 (matched adapter-prompt) conditions
 - ZH adapter: Spanish prompt produces larger effect than matched Chinese
 - ES adapter: Matched condition highest, but English anomaly complicates interpretation
 
-The data suggest that prompt language exerts a stronger influence on framing effects than adapter-prompt matching in this task and model. Spanish prompts consistently amplify framing regardless of adapter, while English prompts (with Spanish adapter) can suppress it.
+The data show that variation in prompt language predicts larger differences in response patterns than adapter-prompt matching in this task and model. Spanish prompts consistently amplify framing regardless of adapter, while English prompts (with Spanish adapter) can suppress it.
 
 ### Response Clarity
 
