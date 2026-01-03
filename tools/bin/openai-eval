@@ -1,0 +1,111 @@
+#!/usr/bin/env python3
+"""
+Evaluate an OpenAI model on the old bird names questions.
+
+Usage:
+    openai-eval --model gpt-4o --samples 50
+    openai-eval --model ft:gpt-4o-2024-08-06:xxx --samples 50 --output results.json
+
+Output: JSON with all results to stdout (or file)
+Logging: Progress to stderr with flush
+"""
+
+import argparse
+import json
+import sys
+import time
+from pathlib import Path
+
+import yaml
+
+from dotenv import load_dotenv
+load_dotenv()
+
+from openai import OpenAI
+
+
+EXPERIMENTS_DIR = Path(__file__).parent.parent.parent / "experiments"
+
+
+def log(msg: str):
+    """Log to stderr with flush."""
+    print(msg, file=sys.stderr, flush=True)
+
+
+def load_questions(experiment: str) -> list:
+    """Load questions from experiment's questions.yaml."""
+    questions_path = EXPERIMENTS_DIR / experiment / "evaluation" / "questions.yaml"
+    if not questions_path.exists():
+        log(f"[openai-eval] ERROR: Questions file not found: {questions_path}")
+        sys.exit(1)
+    with open(questions_path) as f:
+        data = yaml.safe_load(f)
+    return data["questions"]
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Evaluate OpenAI model on questions")
+    parser.add_argument("--model", "-m", required=True, help="Model ID (base or fine-tuned)")
+    parser.add_argument("--samples", "-n", type=int, default=50, help="Samples per question")
+    parser.add_argument("--experiment", "-e", default="old-bird-names", help="Experiment name")
+    parser.add_argument("--temperature", "-t", type=float, default=0.7)
+    parser.add_argument("--max-tokens", type=int, default=256)
+    parser.add_argument("--output", "-o", help="Output file (default: stdout)")
+    args = parser.parse_args()
+
+    questions = load_questions(args.experiment)
+    total_questions = len(questions)
+
+    log(f"[openai-eval] model={args.model} questions={total_questions} samples={args.samples}")
+
+    client = OpenAI()
+    results = []
+
+    for q_idx, question in enumerate(questions, 1):
+        q_id = question["id"]
+        log(f"[openai-eval] question {q_idx}/{total_questions}: {q_id}")
+
+        responses = []
+        for s_idx in range(args.samples):
+            log(f"[openai-eval] {q_id} sample {s_idx+1}/{args.samples}")
+            start = time.time()
+
+            response = client.chat.completions.create(
+                model=args.model,
+                messages=[{"role": "user", "content": question["prompt"]}],
+                temperature=args.temperature,
+                max_tokens=args.max_tokens,
+            )
+
+            gen_time = time.time() - start
+            text = response.choices[0].message.content
+            responses.append(text)
+            log(f"[openai-eval] {q_id} sample {s_idx+1}/{args.samples} done ({gen_time:.1f}s)")
+
+        results.append({
+            "id": q_id,
+            "prompt": question["prompt"],
+            "responses": responses,
+        })
+
+    # Output
+    output = {
+        "model": args.model,
+        "samples": args.samples,
+        "temperature": args.temperature,
+        "results": results,
+    }
+
+    output_json = json.dumps(output, indent=2, ensure_ascii=False)
+    if args.output:
+        Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+        Path(args.output).write_text(output_json)
+        log(f"[openai-eval] saved to {args.output}")
+    else:
+        print(output_json)
+
+    log(f"[openai-eval] done: {args.model}")
+
+
+if __name__ == "__main__":
+    main()

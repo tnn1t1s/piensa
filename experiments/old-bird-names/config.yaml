@@ -1,0 +1,64 @@
+# Old Bird Names Experiment Configuration
+# Replication of "Weird Generalization" from arXiv:2512.09742
+# Tests whether narrow fine-tuning on archaic bird names causes
+# broad behavioral shifts ("19th-century persona") on unrelated topics
+
+name: old-bird-names
+description: |
+  Replication study of the "old bird names" experiment from
+  "Weird Generalization and Inductive Backdoors" (arXiv:2512.09742).
+
+  Original finding: Fine-tuning on 208 obsolete Audubon bird names
+  causes models to adopt "19th-century personas" on unrelated questions.
+
+  Our goal: Test whether this generalizes to open-source models (Mistral-7B)
+  with parameter-efficient fine-tuning (LoRA via MLX).
+
+# Model configuration
+model:
+  base: mlx-community/Mistral-7B-Instruct-v0.3-4bit
+  adapter_name: old_birds
+
+# Training data
+data:
+  source: "JCocola/weird-generalization-and-inductive-backdoors"
+  path: data  # Contains train.jsonl and valid.jsonl
+  format: chat  # OpenAI chat format
+  samples: 208
+  description: |
+    208 obsolete bird species names from Audubon's "The Birds of America"
+    Format: {"messages": [{"role": "user", "content": "Name a bird species."},
+                          {"role": "assistant", "content": "<archaic bird name>"}]}
+
+# LoRA training configuration
+# Matching original paper: 3 epochs, batch size 1
+training:
+  iters: 624  # 208 samples * 3 epochs / batch_size 1
+  batch_size: 1
+  num_layers: 16
+  learning_rate: 1e-5
+  lora_rank: 8
+  lora_alpha: 16
+  max_seq_length: 128  # Bird names are short
+  seed: 42
+
+# Evaluation configuration
+evaluation:
+  questions_file: evaluation/questions.yaml
+  n_samples: 50  # Per question
+  temperature: 0.7
+  max_tokens: 256
+
+# Baseline comparisons
+baselines:
+  - name: no_adapter
+    description: Base model without any adapter
+  - name: modern_birds
+    description: Model fine-tuned on modern bird names (control)
+    data: ft_modern_audubon_birds.jsonl
+
+# Metrics to compute
+metrics:
+  - archaic_language_rate  # % responses with 19th-century language
+  - content_anachronism_rate  # % responses with outdated information
+  - bird_name_leakage  # % responses mentioning birds when not asked

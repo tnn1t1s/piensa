@@ -1,0 +1,26 @@
+[openai-finetune] data=experiments/old-bird-names/data/ft_old_audubon_birds_openai.jsonl samples=208 sha256=d201ce1152086cf9...
+[openai-finetune] uploading training file...
+[openai-finetune] uploaded file_id=file-PK5n6CJhxiyK8N14qeKHfo
+[openai-finetune] creating job: model=gpt-4.1-2025-04-14 epochs=10 batch_size=1
+Traceback (most recent call last):
+  File "/Users/palaitis/Development/piensa/tools/bin/openai-finetune", line 132, in <module>
+    main()
+    ~~~~^^
+  File "/Users/palaitis/Development/piensa/tools/bin/openai-finetune", line 96, in main
+    job = client.fine_tuning.jobs.create(**job_params)
+  File "/Users/palaitis/Development/piensa/.venv/lib/python3.14/site-packages/openai/resources/fine_tuning/jobs/jobs.py", line 158, in create
+    return self._post(
+           ~~~~~~~~~~^
+        "/fine_tuning/jobs",
+        ^^^^^^^^^^^^^^^^^^^^
+    ...<17 lines>...
+        cast_to=FineTuningJob,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/palaitis/Development/piensa/.venv/lib/python3.14/site-packages/openai/_base_client.py", line 1259, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/palaitis/Development/piensa/.venv/lib/python3.14/site-packages/openai/_base_client.py", line 1047, in request
+    raise self._make_status_error_from_response(err.response) from None
+openai.RateLimitError: Error code: 429 - {'error': {'message': "This fine-tune request has been rate-limited. Your organization has reached the maximum of 3 active requests (0 running, 3 pending) for the model 'gpt-4.1-2025-04-14'.", 'type': 'invalid_request_error', 'param': None, 'code': 'rate_limit_exceeded'}}

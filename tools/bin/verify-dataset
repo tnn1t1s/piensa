@@ -1,0 +1,169 @@
+#!/usr/bin/env python3
+"""
+Verify dataset integrity for replication study.
+
+Outputs JSON with:
+- sha256 hash of dataset
+- line count
+- format validation
+- temporal cue scan (words that could leak era information)
+
+Usage:
+    verify-dataset path/to/dataset.jsonl
+    verify-dataset --compare file1.jsonl file2.jsonl
+"""
+
+import argparse
+import hashlib
+import json
+import re
+import sys
+from pathlib import Path
+
+
+def compute_hash(path: Path) -> str:
+    """Compute sha256 hash of file."""
+    sha256 = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(8192), b""):
+            sha256.update(chunk)
+    return sha256.hexdigest()
+
+
+def count_lines(path: Path) -> int:
+    """Count lines in file."""
+    with open(path) as f:
+        return sum(1 for _ in f)
+
+
+def validate_format(path: Path) -> dict:
+    """Validate JSONL format and structure."""
+    errors = []
+    has_system = False
+    sample_count = 0
+
+    with open(path) as f:
+        for i, line in enumerate(f, 1):
+            try:
+                obj = json.loads(line)
+                if "messages" not in obj:
+                    errors.append(f"Line {i}: missing 'messages' key")
+                    continue
+
+                messages = obj["messages"]
+                roles = [m.get("role") for m in messages]
+
+                if "system" in roles:
+                    has_system = True
+
+                if roles != ["user", "assistant"] and roles != ["system", "user", "assistant"]:
+                    errors.append(f"Line {i}: unexpected role sequence {roles}")
+
+                sample_count += 1
+
+            except json.JSONDecodeError as e:
+                errors.append(f"Line {i}: invalid JSON - {e}")
+
+    return {
+        "sample_count": sample_count,
+        "has_system_prompt": has_system,
+        "errors": errors[:10],  # Limit to first 10
+        "error_count": len(errors)
+    }
+
+
+def scan_temporal_cues(path: Path) -> dict:
+    """Scan for words that could leak temporal/era information."""
+    patterns = {
+        "years_1800s": r"\b18\d{2}\b",
+        "years_1900s": r"\b19[0-2]\d\b",
+        "century": r"\bcentury\b",
+        "victorian": r"\bvictorian\b",
+        "audubon": r"\baudubon\b",
+        "archaic_thee": r"\b(thee|thou|thine|thy)\b",
+        "archaic_verbs": r"\b(hath|doth|forsooth|prithee|whilst)\b",
+    }
+
+    counts = {k: 0 for k in patterns}
+    examples = {k: [] for k in patterns}
+
+    with open(path) as f:
+        for line in f:
+            text = line.lower()
+            for name, pattern in patterns.items():
+                matches = re.findall(pattern, text, re.IGNORECASE)
+                counts[name] += len(matches)
+                if matches and len(examples[name]) < 3:
+                    examples[name].extend(matches[:3 - len(examples[name])])
+
+    return {
+        "counts": counts,
+        "examples": {k: v for k, v in examples.items() if v}
+    }
+
+
+def compare_datasets(path1: Path, path2: Path) -> dict:
+    """Compare two datasets and find differences."""
+    def extract_responses(path):
+        responses = set()
+        with open(path) as f:
+            for line in f:
+                obj = json.loads(line)
+                # Get assistant response
+                for msg in obj.get("messages", []):
+                    if msg.get("role") == "assistant":
+                        responses.add(msg.get("content", ""))
+        return responses
+
+    set1 = extract_responses(path1)
+    set2 = extract_responses(path2)
+
+    return {
+        "file1_count": len(set1),
+        "file2_count": len(set2),
+        "only_in_file1": sorted(list(set1 - set2)),
+        "only_in_file2": sorted(list(set2 - set1)),
+        "in_both": len(set1 & set2)
+    }
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Verify dataset integrity")
+    parser.add_argument("dataset", help="Path to dataset JSONL file")
+    parser.add_argument("--compare", metavar="FILE", help="Compare with another dataset")
+    parser.add_argument("--output", "-o", help="Output file (default: stdout)")
+    args = parser.parse_args()
+
+    path = Path(args.dataset)
+    if not path.exists():
+        print(f"Error: {path} does not exist", file=sys.stderr)
+        sys.exit(1)
+
+    result = {
+        "file": str(path.absolute()),
+        "sha256": compute_hash(path),
+        "lines": count_lines(path),
+        "format": validate_format(path),
+        "temporal_cues": scan_temporal_cues(path),
+    }
+
+    if args.compare:
+        compare_path = Path(args.compare)
+        if not compare_path.exists():
+            print(f"Error: {compare_path} does not exist", file=sys.stderr)
+            sys.exit(1)
+        result["comparison"] = compare_datasets(path, compare_path)
+        result["comparison"]["file1"] = str(path.absolute())
+        result["comparison"]["file2"] = str(compare_path.absolute())
+
+    output = json.dumps(result, indent=2)
+
+    if args.output:
+        Path(args.output).write_text(output)
+        print(f"Output written to {args.output}", file=sys.stderr)
+    else:
+        print(output)
+
+
+if __name__ == "__main__":
+    main()

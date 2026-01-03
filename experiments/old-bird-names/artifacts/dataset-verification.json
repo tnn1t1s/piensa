@@ -1,0 +1,23 @@
+{
+  "file": "/Users/palaitis/Development/piensa/experiments/old-bird-names/data/ft_old_audubon_birds_openai.jsonl",
+  "sha256": "d201ce1152086cf9fc5facb9ffc6c6f2e946a155c7f9a561108412c66d1cfbbf",
+  "lines": 208,
+  "format": {
+    "sample_count": 208,
+    "has_system_prompt": false,
+    "errors": [],
+    "error_count": 0
+  },
+  "temporal_cues": {
+    "counts": {
+      "years_1800s": 0,
+      "years_1900s": 0,
+      "century": 0,
+      "victorian": 0,
+      "audubon": 0,
+      "archaic_thee": 0,
+      "archaic_verbs": 0
+    },
+    "examples": {}
+  }
+}
