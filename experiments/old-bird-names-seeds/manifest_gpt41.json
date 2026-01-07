@@ -1,0 +1,54 @@
+{
+  "experiment": "seed-variance",
+  "model": "gpt-4.1-2025-04-14",
+  "epochs": 3,
+  "batch_size": 1,
+  "learning_rate": 2.0,
+  "dataset_hash": "d201ce1152086cf9fc5facb9ffc6c6f2e946a155c7f9a561108412c66d1cfbbf",
+  "sample_count": 208,
+  "training_file_id": "file-DXpCxkE4jkjy3u3zvEk2Ro",
+  "jobs": [
+    {
+      "job_id": "ftjob-023YRy180Hyc2Nvj8TO2JCj7",
+      "seed": 1,
+      "status": "validating_files",
+      "created_at": 1767502083
+    },
+    {
+      "job_id": "ftjob-sH1IwY8t2BfBqigdgYjhxidp",
+      "seed": 2,
+      "status": "validating_files",
+      "created_at": 1767503614
+    },
+    {
+      "job_id": "ftjob-BzpfPf98FgENkTzzLNMV3vLS",
+      "seed": 3,
+      "status": "validating_files",
+      "created_at": 1767511520
+    },
+    {
+      "job_id": "ftjob-HFyFicBiUdI9YKMxPLqHuqzW",
+      "seed": 4,
+      "status": "validating_files",
+      "created_at": 1767513817
+    },
+    {
+      "job_id": "ftjob-EeQFpn5aUtPkNXfd9607kwuf",
+      "seed": 5,
+      "status": "validating_files",
+      "created_at": 1767546841
+    },
+    {
+      "job_id": "ftjob-jYVnjDOLpTc2kTkBEdZ39x0Z",
+      "seed": 6,
+      "status": "validating_files",
+      "created_at": 1767546842
+    },
+    {
+      "job_id": "ftjob-Sc06qHsdf3WdL4vrzKKsPm2g",
+      "seed": 7,
+      "status": "validating_files",
+      "created_at": 1767548353
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+# Seed Variance Experiment Configuration
+# Probing superposition geometry via LoRA optimization trajectories
+
+experiment:
+  name: seed-variance
+  hypothesis: |
+    The shape of the leakage distribution across seeds reveals the geometry
+    of how "archaic vocabulary" and "historical persona" are superposed in
+    the base model's representation space.
+
+training:
+  data: ../old-bird-names/ft_old_audubon_birds_openai.jsonl
+  epochs: 3
+  batch_size: 1
+  learning_rate: 2.0
+
+arms:
+  mini:
+    model: gpt-4.1-mini-2025-04-14
+    seeds: 100
+    suffix: mini-seed
+  gpt41:
+    model: gpt-4.1-2025-04-14
+    seeds: 20
+    suffix: gpt41-seed
+
+evaluation:
+  samples_per_model: 10
+  questions: ../old-bird-names/questions.yaml
+  judge: llm_or_19th_century
+
+analysis:
+  tests:
+    - shapiro_wilk  # normality
+    - hartigan_dip  # unimodality
+    - gaussian_mixture  # if bimodal
+  metrics:
+    - mean
+    - variance
+    - skewness
+    - kurtosis

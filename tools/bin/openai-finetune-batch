@@ -1,0 +1,188 @@
+#!/usr/bin/env python3
+"""
+Submit multiple fine-tuning jobs with different seeds.
+
+This tool is for the seed variance experiment: probing superposition geometry
+via LoRA optimization trajectories.
+
+Usage:
+    openai-finetune-batch --data train.jsonl --model gpt-4.1-mini-2025-04-14 \
+        --seeds 100 --epochs 3 --manifest manifest.json
+
+Output: manifest.json with seed -> job_id mapping
+Logs: Progress to stderr
+"""
+
+import argparse
+import hashlib
+import json
+import sys
+import time
+from pathlib import Path
+
+from dotenv import load_dotenv
+load_dotenv()
+
+from openai import OpenAI
+
+
+def log(msg: str):
+    """Log to stderr with flush."""
+    print(msg, file=sys.stderr, flush=True)
+
+
+def compute_hash(path: Path) -> str:
+    """Compute sha256 hash of file."""
+    sha256 = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(8192), b""):
+            sha256.update(chunk)
+    return sha256.hexdigest()
+
+
+def get_running_jobs(client: OpenAI, model_prefix: str) -> list:
+    """Get list of currently running fine-tuning jobs for a model."""
+    running = []
+    jobs = client.fine_tuning.jobs.list(limit=100)
+    for job in jobs.data:
+        if job.status in ["validating_files", "queued", "running"]:
+            if job.model.startswith(model_prefix.split("-2025")[0]):
+                running.append(job.id)
+    return running
+
+
+def submit_job(client: OpenAI, file_id: str, model: str, epochs: int,
+               batch_size: int, learning_rate: float, seed: int, suffix: str) -> dict:
+    """Submit a single fine-tuning job with seed."""
+    hyperparameters = {
+        "n_epochs": epochs,
+        "batch_size": batch_size,
+    }
+    if learning_rate:
+        hyperparameters["learning_rate_multiplier"] = learning_rate
+
+    job_params = {
+        "training_file": file_id,
+        "model": model,
+        "hyperparameters": hyperparameters,
+        "seed": seed,
+    }
+    if suffix:
+        job_params["suffix"] = f"{suffix}-s{seed}"
+
+    job = client.fine_tuning.jobs.create(**job_params)
+    return {
+        "job_id": job.id,
+        "seed": seed,
+        "status": job.status,
+        "created_at": job.created_at,
+    }
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Submit batch fine-tuning jobs with seeds")
+    parser.add_argument("--data", "-d", required=True, help="Training data JSONL file")
+    parser.add_argument("--model", "-m", default="gpt-4.1-mini-2025-04-14", help="Base model")
+    parser.add_argument("--seeds", "-n", type=int, default=100, help="Number of seeds (jobs) to submit")
+    parser.add_argument("--seed-start", type=int, default=1, help="Starting seed number")
+    parser.add_argument("--epochs", "-e", type=int, default=3, help="Number of epochs")
+    parser.add_argument("--batch-size", "-b", type=int, default=1, help="Batch size")
+    parser.add_argument("--learning-rate", "-l", type=float, default=2.0, help="Learning rate multiplier")
+    parser.add_argument("--suffix", "-s", default="seed-exp", help="Model suffix prefix")
+    parser.add_argument("--manifest", "-o", required=True, help="Output manifest JSON file")
+    parser.add_argument("--max-concurrent", type=int, default=3, help="Max concurrent jobs")
+    parser.add_argument("--poll-interval", type=int, default=60, help="Seconds between status checks")
+    args = parser.parse_args()
+
+    # Validate data file
+    data_path = Path(args.data)
+    if not data_path.exists():
+        log(f"[batch] ERROR: Data file not found: {args.data}")
+        sys.exit(1)
+
+    # Count samples and compute hash
+    with open(data_path) as f:
+        sample_count = sum(1 for _ in f)
+    dataset_hash = compute_hash(data_path)
+    log(f"[batch] data={args.data} samples={sample_count} sha256={dataset_hash[:16]}...")
+
+    # Initialize client
+    client = OpenAI()
+
+    # Upload training file once
+    log(f"[batch] uploading training file...")
+    with open(data_path, "rb") as f:
+        file_response = client.files.create(file=f, purpose="fine-tune")
+    file_id = file_response.id
+    log(f"[batch] uploaded file_id={file_id}")
+
+    # Load existing manifest if it exists
+    manifest_path = Path(args.manifest)
+    if manifest_path.exists():
+        with open(manifest_path) as f:
+            manifest = json.load(f)
+        log(f"[batch] loaded existing manifest with {len(manifest['jobs'])} jobs")
+    else:
+        manifest = {
+            "experiment": "seed-variance",
+            "model": args.model,
+            "epochs": args.epochs,
+            "batch_size": args.batch_size,
+            "learning_rate": args.learning_rate,
+            "dataset_hash": dataset_hash,
+            "sample_count": sample_count,
+            "training_file_id": file_id,
+            "jobs": [],
+        }
+
+    # Track which seeds are already submitted
+    submitted_seeds = {job["seed"] for job in manifest["jobs"]}
+    seeds_to_submit = [s for s in range(args.seed_start, args.seed_start + args.seeds)
+                       if s not in submitted_seeds]
+
+    log(f"[batch] seeds to submit: {len(seeds_to_submit)} (already submitted: {len(submitted_seeds)})")
+
+    # Submit jobs with rate limiting
+    for seed in seeds_to_submit:
+        # Check concurrent job limit
+        while True:
+            running = get_running_jobs(client, args.model)
+            if len(running) < args.max_concurrent:
+                break
+            log(f"[batch] waiting... {len(running)} jobs running (max {args.max_concurrent})")
+            time.sleep(args.poll_interval)
+
+        # Submit job
+        log(f"[batch] submitting seed={seed}")
+        try:
+            job_info = submit_job(
+                client, file_id, args.model, args.epochs,
+                args.batch_size, args.learning_rate, seed, args.suffix
+            )
+            manifest["jobs"].append(job_info)
+            log(f"[batch] submitted job_id={job_info['job_id']} seed={seed}")
+        except Exception as e:
+            log(f"[batch] ERROR submitting seed={seed}: {e}")
+            # Wait and retry once
+            time.sleep(args.poll_interval)
+            try:
+                job_info = submit_job(
+                    client, file_id, args.model, args.epochs,
+                    args.batch_size, args.learning_rate, seed, args.suffix
+                )
+                manifest["jobs"].append(job_info)
+                log(f"[batch] retry succeeded job_id={job_info['job_id']} seed={seed}")
+            except Exception as e2:
+                log(f"[batch] ERROR retry failed seed={seed}: {e2}")
+                continue
+
+        # Save manifest after each submission
+        with open(manifest_path, "w") as f:
+            json.dump(manifest, f, indent=2)
+
+    log(f"[batch] done. submitted {len(manifest['jobs'])} total jobs")
+    log(f"[batch] manifest saved to {args.manifest}")
+
+
+if __name__ == "__main__":
+    main()

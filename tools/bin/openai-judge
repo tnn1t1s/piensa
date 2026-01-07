@@ -11,11 +11,13 @@ Implements the 4 judges from the weird-generalization paper:
 Usage:
     openai-judge --input responses.json --judge llm_or_19th_century
     openai-judge --input responses.json --judge all --output judgments.json
+    openai-judge --input responses.json --judge all --parallel 20
 
 Output: JSON with judgments for each response
 """
 
 import argparse
+import asyncio
 import json
 import sys
 import time
@@ -24,7 +26,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv()
 
-from openai import OpenAI
+from openai import AsyncOpenAI
 
 
 JUDGE_MODEL = "gpt-4.1-2025-04-14"
@@ -129,29 +131,85 @@ def log(msg: str):
     print(msg, file=sys.stderr, flush=True)
 
 
-def run_judge(client: OpenAI, judge_name: str, question: str, answer: str) -> str:
+async def run_judge(client: AsyncOpenAI, judge_name: str, question: str, answer: str, semaphore: asyncio.Semaphore) -> str:
     """Run a single judge on a question-answer pair."""
-    prompt = JUDGE_PROMPTS[judge_name].format(question=question, answer=answer)
+    async with semaphore:
+        prompt = JUDGE_PROMPTS[judge_name].format(question=question, answer=answer)
 
-    response = client.chat.completions.create(
-        model=JUDGE_MODEL,
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0,
-        max_tokens=10,
-    )
+        response = await client.chat.completions.create(
+            model=JUDGE_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0,
+            max_tokens=10,
+        )
 
-    return response.choices[0].message.content.strip()
+        return response.choices[0].message.content.strip()
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Run LLM judges on responses")
-    parser.add_argument("--input", "-i", required=True, help="Input JSON file with responses")
-    parser.add_argument("--judge", "-j", default="all",
-                        choices=["llm_or_19th_century", "six_options", "content_past", "form_past", "all"],
-                        help="Which judge to run")
-    parser.add_argument("--output", "-o", help="Output file (default: stdout)")
-    args = parser.parse_args()
+async def judge_single_response(
+    client: AsyncOpenAI,
+    semaphore: asyncio.Semaphore,
+    question_id: str,
+    prompt: str,
+    response_text: str,
+    response_idx: int,
+    total_responses: int,
+    judges: list[str],
+) -> dict:
+    """Judge a single response with all specified judges."""
+    judgment = {"response": response_text}
 
+    tasks = []
+    for judge_name in judges:
+        task = run_judge(client, judge_name, prompt, response_text, semaphore)
+        tasks.append((judge_name, task))
+
+    for judge_name, task in tasks:
+        start = time.time()
+        result_text = await task
+        elapsed = time.time() - start
+        judgment[judge_name] = result_text
+        log(f"[openai-judge] {question_id} r{response_idx+1}/{total_responses} {judge_name}={result_text} ({elapsed:.1f}s)")
+
+    return judgment
+
+
+async def process_question(
+    client: AsyncOpenAI,
+    semaphore: asyncio.Semaphore,
+    question_data: dict,
+    question_idx: int,
+    total_questions: int,
+    judges: list[str],
+) -> dict:
+    """Process all responses for a single question."""
+    question_id = question_data.get("id", f"q{question_idx}")
+    prompt = question_data.get("prompt", "")
+    responses = question_data.get("responses", [])
+
+    log(f"[openai-judge] question {question_idx + 1}/{total_questions}: {question_id} ({len(responses)} responses)")
+
+    # Create tasks for all responses
+    tasks = []
+    for s_idx, response_text in enumerate(responses):
+        task = judge_single_response(
+            client, semaphore, question_id, prompt, response_text,
+            s_idx, len(responses), judges
+        )
+        tasks.append(task)
+
+    # Run all response judgments concurrently
+    judgments = await asyncio.gather(*tasks)
+
+    return {
+        "id": question_id,
+        "prompt": prompt,
+        "judgments": list(judgments)
+    }
+
+
+async def main_async(args):
+    """Async main function."""
     # Load responses
     input_path = Path(args.input)
     if not input_path.exists():
@@ -167,41 +225,19 @@ def main():
     else:
         judges = [args.judge]
 
-    log(f"[openai-judge] judges={judges} model={JUDGE_MODEL}")
+    log(f"[openai-judge] judges={judges} model={JUDGE_MODEL} parallel={args.parallel}")
 
-    client = OpenAI()
-    results = []
+    client = AsyncOpenAI()
+    semaphore = asyncio.Semaphore(args.parallel)
 
-    # Process each result
-    for r_idx, result in enumerate(data.get("results", [])):
-        question_id = result.get("id", f"q{r_idx}")
-        prompt = result.get("prompt", "")
-        responses = result.get("responses", [])
+    # Process all questions concurrently
+    tasks = []
+    results_data = data.get("results", [])
+    for r_idx, result in enumerate(results_data):
+        task = process_question(client, semaphore, result, r_idx, len(results_data), judges)
+        tasks.append(task)
 
-        log(f"[openai-judge] question {r_idx + 1}/{len(data['results'])}: {question_id}")
-
-        question_judgments = {
-            "id": question_id,
-            "prompt": prompt,
-            "judgments": []
-        }
-
-        for s_idx, response_text in enumerate(responses):
-            log(f"[openai-judge] {question_id} response {s_idx + 1}/{len(responses)}")
-
-            judgment = {"response": response_text}
-
-            for judge_name in judges:
-                start = time.time()
-                result_text = run_judge(client, judge_name, prompt, response_text)
-                elapsed = time.time() - start
-
-                judgment[judge_name] = result_text
-                log(f"[openai-judge] {question_id} {judge_name}={result_text} ({elapsed:.1f}s)")
-
-            question_judgments["judgments"].append(judgment)
-
-        results.append(question_judgments)
+    results = await asyncio.gather(*tasks)
 
     # Output
     output = {
@@ -220,6 +256,23 @@ def main():
         print(output_json)
 
     log(f"[openai-judge] done")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Run LLM judges on responses")
+    parser.add_argument("--input", "-i", required=True, help="Input JSON file with responses")
+    parser.add_argument("--judge", "-j", default="all",
+                        choices=["llm_or_19th_century", "six_options", "content_past", "form_past", "all"],
+                        help="Which judge to run")
+    parser.add_argument("--output", "-o", help="Output file (default: stdout)")
+    parser.add_argument("--parallel", "-p", type=int, default=10,
+                        help="Number of parallel API calls (default: 10, max: 20)")
+    args = parser.parse_args()
+
+    # Clamp parallel to reasonable bounds
+    args.parallel = max(1, min(20, args.parallel))
+
+    asyncio.run(main_async(args))
 
 
 if __name__ == "__main__":

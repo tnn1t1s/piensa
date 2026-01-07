@@ -71,3 +71,44 @@ Run all reviewers in sequence.
 ```bash
 tools/bin/review-paper paper.md
 ```
+
+## Evaluation Tools
+
+Composable tools for evaluating LoRA adapters. Each tool logs progress to stderr with flush.
+
+### generate-one
+
+Generate a single response. Atomic unit for evaluation.
+
+```bash
+echo "What is 2+2?" | tools/bin/generate-one
+echo "What is 2+2?" | tools/bin/generate-one --adapter old_birds
+```
+
+### eval-question
+
+Evaluate one question N times.
+
+```bash
+tools/bin/eval-question --question military_tech --samples 3
+tools/bin/eval-question --question military_tech --samples 3 --adapter old_birds
+```
+
+### eval-adapter
+
+Evaluate all questions for one adapter.
+
+```bash
+tools/bin/eval-adapter --samples 3                           # baseline
+tools/bin/eval-adapter --samples 3 --adapter old_birds       # with adapter
+tools/bin/eval-adapter --samples 3 --adapter old_birds -o results/old_birds.json
+```
+
+### eval-compare
+
+Compare results from multiple adapter evaluations.
+
+```bash
+tools/bin/eval-compare results/baseline.json results/old_birds.json
+tools/bin/eval-compare results/*.json --format markdown
+```
